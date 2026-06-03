@@ -1,33 +1,27 @@
-from app.db.database import get_db_connection
 from datetime import datetime 
 from zoneinfo import ZoneInfo
-from mysql.connector import Error
+from app.core.database import SessionLocal
+from app.models.models import ButtonLog
 
 def tarea_guardar_botonera(serie: str, letter: str, label: str, valor: int):
-    amount = valor
-    biutton_box_serie = serie
-    connection = None
-    cursor = None
+    db = SessionLocal()
     try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
         create_time = datetime.now(ZoneInfo("America/Bogota"))
+    
+        nuevo_log = ButtonLog(
+            button_box_serie=int(serie),
+            letter=letter,
+            label=label,
+            create_time=create_time
+        )
         
-        query = """
-            INSERT INTO button_logs (button_box_serie, letter, label, create_time) 
-            VALUES (%s, %s, %s, %s)
-        """
-        datos = (serie, letter, label, create_time)
+        db.add(nuevo_log)
+        db.commit()
+        print(f"Registro guardado en 'botonera' | Serie: {serie} | Letra: {letter}")
         
-        cursor.execute(query, datos)
-        connection.commit()
-        print(f"Registro guardado exitosamente en 'botonera' | Serie: {serie} | Letra: {letter} | Valor: {amount} | ")
-    except Error as e:
-        if connection:
-            connection.rollback()
+    except Exception as e:
+        db.rollback()
         print(f"Error al guardar el registro en 'botonera': {e}")
+        
     finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
+        db.close()
