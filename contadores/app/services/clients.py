@@ -24,6 +24,7 @@ def create_client(db: Session, client_data: ClientCreate):
             )
 
     new_client = Client(
+        id =client_data.id,
         nit=client_data.nit,
         name=client_data.name,
         email=client_data.email,
@@ -51,3 +52,22 @@ def create_client(db: Session, client_data: ClientCreate):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error interno al guardar el cliente: {str(e)}"
         )
+
+def get_clients(db: Session):
+    """
+    Función para obtener todos los clientes de la base de datos.
+    """
+    return db.query(Client).all()   
+
+def get_sedes_by_client_id(db: Session, client_id: int):
+    """
+    Función para obtener las sedes asociadas a un cliente específico.
+    """
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cliente no encontrado."
+        )
+    return client.sedes  # Asumiendo que el modelo Client tiene una relación 'sedes' definida
+    print ("Obteniendo sedes para el cliente con ID:", client.sedes)

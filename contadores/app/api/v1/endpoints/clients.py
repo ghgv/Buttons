@@ -2,16 +2,10 @@
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-
-# 1. Importamos la conexión real a BD y el candado de seguridad
 from app.api.deps import get_db, get_admin_user
-
-# 2. Importamos el modelo de base de datos necesario para el GET
 from app.models.models import Client
-
-# Esquemas y Servicios
 from app.schemas.client import ClientCreate
-from app.services.clients import create_client
+from app.services.clients import create_client, get_clients, get_sedes_by_client_id
 
 router = APIRouter(prefix="/clients", tags=["Gestión de Clientes"])
 
@@ -26,10 +20,16 @@ def registrar_nuevo_cliente(
 
 @router.get("/", status_code=status.HTTP_200_OK)   
 def obtener_clientes(
-    # Las dependencias VAN AQUÍ, en los parámetros
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_admin_user) # Protegemos para que solo admins vean la lista
+    current_user: dict = Depends(get_admin_user) # <- Aquí usamos el candado correcto
 ):
-    # Sin guion bajo en query
-    clientes = db.query(Client).all()
-    return clientes
+    return get_clients(db=db)
+
+@router.get("/{client_id}", status_code=status.HTTP_200_OK)
+def obtener_sedes_por_id_cliente(
+    client_id: int,
+    db: Session = Depends(get_db),
+    # current_user: dict = Depends(get_admin_user) # <- Aquí usamos el candado correcto
+):
+    return get_sedes_by_client_id(db=db, client_id=client_id)
+

@@ -3,7 +3,7 @@ from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 
 class ClientCreate(BaseModel):
-    nit: Optional[int] = Field(None, description="NIT del cliente, opcional")
+    nit: int = Field(None, description="NIT del cliente, opcional")
     name: str = Field(
         min_length=2, 
         max_length=255, 

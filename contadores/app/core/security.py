@@ -10,7 +10,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 SECRET_KEY = os.getenv("JWT_SECRET", "1034279336jwtnbw")  # Valor por defecto para desarrollo
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 120 #Equivalente a 2 horas
+ACCESS_TOKEN_EXPIRE_MINUTES = 1440 #Equivalente a 2 horas
 
 def get_password_hash(password: str) -> str:
     truncated_pwd = password.encode('utf-8')[:72].decode('utf-8', 'ignore')
