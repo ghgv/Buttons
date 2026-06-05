@@ -2,27 +2,24 @@
 import { z } from "zod";
 
 export const createBanoSchema = z.object({
-  nivel_id: z.string().min(1, { message: "El nivel es requerido" }),
+  level_id: z.string().min(1, { message: "El nivel es requerido" }),
   name: z
-    .string()
-    .min(1, { message: "El nombre del baño es requerido" })
-    .min(2, { message: "El nombre debe tener al menos 2 caracteres" }),
-  tipo: z.enum(["HOMBRES", "MUJERES", "MIXTO", "PCD"], {
-    message: "Tipo de baño inválido",
+      .string()
+    .min(1, { message: "El nombre del baño es requerido" }), 
+  gender: z.enum(["men", "female", "mixed", "unisex"], {
+    message: "Género de baño inválido",
   }),
-  capacidad: z
-    .number()
-    .min(1, { message: "La capacidad debe ser al menos 1" }),
+  description: z.string().optional(),
 });
 
 export type CreateBanoRequest = z.infer<typeof createBanoSchema>;
 
 export interface BanoResponse {
   id: string;
-  nivel_id: string;
+  level_id: string;
   name: string;
-  tipo: "HOMBRES" | "MUJERES" | "MIXTO" | "PCD";
-  capacidad: number;
+  gender: "men" | "women" | "mixed" | "disabled";
+  description?: string;
   created_at: string;
   updated_at?: string;
 }

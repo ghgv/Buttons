@@ -9,7 +9,8 @@ import {
   Menu,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  AlertTriangle
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useState } from "react";
@@ -37,6 +38,12 @@ export default function RoutePrivate({ isAuthenticated }: PrivateLayoutProps) {
       label: "Dashboard",
       description: "Visión general"
     },
+    { 
+    path: "/alertas",  // ✅ Nueva ruta
+    icon: AlertTriangle, 
+    label: "Alertas",
+    description: "Monitoreo de incidentes"
+  },
     { 
       path: "/clientes", 
       icon: Building2, 

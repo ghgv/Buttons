@@ -1,56 +1,59 @@
-// components/niveles/CrearNivelModal.tsx
+// components/sedes/CrearSedeModal.tsx
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, Building2, Hash } from "lucide-react";
+import { X, Building2, MapPin } from "lucide-react";
 import { useEffect } from "react";
-import { createNivelSchema, type CreateNivelRequest } from "../../../schemas/nivel.schema";
+import { createSedeSchema, type CreateSedeRequest } from "../../schemas/sede.schema";
 
-interface CrearNivelModalProps {
+interface CrearSedeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (data: CreateNivelRequest) => void;
-  sedeId: string;
-  sedeName: string;
+  onCreate: (data: CreateSedeRequest) => void;
+  clientId: string | number; // ← Acepta ambos
+  clientName: string;
   isPending?: boolean;
 }
 
-export default function CrearNivelModal({ 
+export default function CrearSedeModal({ 
   isOpen, 
   onClose, 
   onCreate,
-  sedeId,
-  sedeName,
+  clientId,
+  clientName,
   isPending = false 
-}: CrearNivelModalProps) {
+}: CrearSedeModalProps) {
   
-  const sedeIdString = String(sedeId);
+  // ✅ Convertir a string para el formulario
+  const clientIdString = String(clientId);
   
+ 
+
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<CreateNivelRequest>({
-    resolver: zodResolver(createNivelSchema),
+  } = useForm<CreateSedeRequest>({
+    resolver: zodResolver(createSedeSchema),
     defaultValues: {
-      sede_id: sedeIdString,
+      client_id: clientIdString, // ← Usar string
       name: "",
-      floor: 0,
+      address: "",
     },
   });
 
   useEffect(() => {
-    if (isOpen && sedeIdString) {
+    if (isOpen && clientIdString) {
       reset({
-        sede_id: sedeIdString,
+        client_id: clientIdString,
         name: "",
-        floor: 0,
+        address: "",
       });
     }
-  }, [isOpen, sedeIdString, reset]);
+  }, [isOpen, clientIdString, reset]);
 
-  const onSubmit = (data: CreateNivelRequest) => {
-    console.log("📝 Datos del nivel:", data);
+  const onSubmit = (data: CreateSedeRequest) => {
+    console.log("📝 Datos enviados:", data);
     onCreate(data);
     reset();
     onClose();
@@ -68,38 +71,38 @@ export default function CrearNivelModal({
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Crear Nivel/Piso</h2>
+            <h2 className="text-xl font-bold text-gray-900">Crear Sede</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Sede: <span className="font-semibold text-purple-600">{sedeName}</span>
+              Cliente: <span className="font-semibold text-purple-600">{clientName}</span>
             </p>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            className="p-1 hover:bg-gray-100 rounded-lg"
+            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X size={20} className="text-gray-500" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
-          <input type="hidden" {...register("sede_id")} value={sedeIdString} />
+          {/* Campo oculto con el valor convertido a string */}
+          <input type="hidden" {...register("client_id")} value={clientIdString} />
 
           <div className="bg-purple-50 p-2 rounded text-xs text-purple-700 font-mono">
-            🔑 ID Sede: {sedeIdString}
+            🔑 ID Cliente: {clientIdString}
           </div>
 
-          {/* Nombre del Nivel */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre del Nivel *
+              Nombre de la Sede *
             </label>
             <div className="relative">
               <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="text"
                 disabled={isPending}
-                placeholder="Ej: Piso Principal, Mezzanine, Terraza"
+                placeholder="Ej: Sede Principal"
                 className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500
                   ${errors.name ? "border-red-500" : "border-gray-300"}`}
                 {...register("name")}
@@ -108,23 +111,22 @@ export default function CrearNivelModal({
             {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
           </div>
 
-          {/* Número de Piso */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Número de Piso *
+              Dirección *
             </label>
             <div className="relative">
-              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
-                type="number"
+                type="text"
                 disabled={isPending}
-                placeholder="Ej: 1, 2, 3, 0 para sótano"
+                placeholder="Calle 123, Ciudad"
                 className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500
-                  ${errors.floor ? "border-red-500" : "border-gray-300"}`}
-                {...register("floor", { valueAsNumber: true })}
+                  ${errors.address ? "border-red-500" : "border-gray-300"}`}
+                {...register("address")}
               />
             </div>
-            {errors.floor && <p className="text-red-500 text-xs mt-1">{errors.floor.message}</p>}
+            {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address.message}</p>}
           </div>
 
           <div className="flex gap-3 pt-4">
@@ -141,7 +143,7 @@ export default function CrearNivelModal({
               disabled={isPending}
               className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
             >
-              {isPending ? "Creando..." : "Crear Nivel"}
+              {isPending ? "Creando..." : "Crear Sede"}
             </button>
           </div>
         </form>

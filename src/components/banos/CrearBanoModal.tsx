@@ -1,15 +1,15 @@
 // components/auth/banos/CrearBanoModal.tsx
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, Droplets, Users, Tag, Home } from "lucide-react";
-import { createBanoSchema, type CreateBanoRequest } from "../../../schemas/bano.schema";
+import { X, Droplets, Tag, Home, FileText } from "lucide-react";
+import { createBanoSchema, type CreateBanoRequest } from "../../schemas/bano.schema";
 
 interface CrearBanoModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (data: CreateBanoRequest) => void;
-  nivelId: string;
-  nivelName: string;
+  levelId: string;
+  levelName: string;
   isPending?: boolean;
 }
 
@@ -17,8 +17,8 @@ export default function CrearBanoModal({
   isOpen, 
   onClose, 
   onCreate, 
-  nivelId, 
-  nivelName, 
+  levelId, 
+  levelName, 
   isPending = false 
 }: CrearBanoModalProps) {
   const {
@@ -29,10 +29,10 @@ export default function CrearBanoModal({
   } = useForm<CreateBanoRequest>({
     resolver: zodResolver(createBanoSchema),
     defaultValues: {
-      nivel_id: nivelId,
+      level_id: levelId,
       name: "",
-      tipo: "MIXTO",
-      capacidad: 1,
+      gender: "mixed",
+      description: "",
     },
   });
 
@@ -58,7 +58,7 @@ export default function CrearBanoModal({
           <div>
             <h2 className="text-xl font-bold text-gray-900">Nuevo Baño</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Nivel: <span className="font-semibold text-purple-600">{nivelName}</span>
+              Nivel: <span className="font-semibold text-purple-600">{levelName}</span>
             </p>
           </div>
           <button
@@ -72,15 +72,15 @@ export default function CrearBanoModal({
 
         {/* Formulario */}
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
-          {/* Campo oculto nivel_id */}
-          <input type="hidden" {...register("nivel_id")} value={nivelId} />
+          {/* Campo oculto level_id */}
+          <input type="hidden" {...register("level_id")} value={levelId} />
 
           {/* Mostrar información del nivel */}
           <div className="bg-purple-50 p-3 rounded-xl flex items-center gap-3">
             <Home size={18} className="text-purple-600" />
             <div>
               <p className="text-xs text-gray-500">Creando baño para</p>
-              <p className="text-sm font-medium text-purple-700">{nivelName}</p>
+              <p className="text-sm font-medium text-purple-700">{levelName}</p>
             </div>
           </div>
 
@@ -94,7 +94,7 @@ export default function CrearBanoModal({
               <input
                 type="text"
                 disabled={isPending}
-                placeholder="Ej: Baño Principal, Baño Ejecutivos, Baño Público"
+                placeholder="Ej: Baño Principal, Baño Ejecutivos"
                 className={`
                   w-full pl-10 pr-3 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
                   disabled:bg-gray-100 disabled:cursor-not-allowed transition-all
@@ -108,10 +108,10 @@ export default function CrearBanoModal({
             )}
           </div>
 
-          {/* Campo Tipo de Baño */}
+          {/* Campo Género del Baño */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tipo de Baño *
+              Género *
             </label>
             <div className="relative">
               <Droplets className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -120,14 +120,14 @@ export default function CrearBanoModal({
                 className={`
                   w-full pl-10 pr-3 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
                   disabled:bg-gray-100 disabled:cursor-not-allowed transition-all appearance-none
-                  ${errors.tipo ? "border-red-500 bg-red-50" : "border-gray-200"}
+                  ${errors.gender ? "border-red-500 bg-red-50" : "border-gray-200"}
                 `}
-                {...register("tipo")}
+                {...register("gender")}
               >
-                <option value="HOMBRES">🚹 Hombres</option>
-                <option value="MUJERES">🚺 Mujeres</option>
-                <option value="MIXTO">👥 Mixto</option>
-                <option value="PCD">♿ PCD (Discapacitados)</option>
+                <option value="men">🚹 Hombres</option>
+                <option value="women">🚺 Mujeres</option>
+                <option value="mixed">👥 Mixto</option>
+                <option value="disabled">🔄 Discapacitados</option>
               </select>
               <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,34 +135,32 @@ export default function CrearBanoModal({
                 </svg>
               </div>
             </div>
-            {errors.tipo && (
-              <p className="text-red-500 text-xs mt-1 ml-1">{errors.tipo.message}</p>
+            {errors.gender && (
+              <p className="text-red-500 text-xs mt-1 ml-1">{errors.gender.message}</p>
             )}
           </div>
 
-          {/* Campo Capacidad */}
+          {/* Campo Descripción (opcional) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Capacidad (número de personas) *
+              Descripción (opcional)
             </label>
             <div className="relative">
-              <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="number"
+              <FileText className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <textarea
                 disabled={isPending}
-                min="1"
-                step="1"
-                placeholder="Ej: 5, 10, 20"
+                rows={3}
+                placeholder="Ej: Baño con accesibilidad, cerca al ascensor, etc."
                 className={`
                   w-full pl-10 pr-3 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                  disabled:bg-gray-100 disabled:cursor-not-allowed transition-all
-                  ${errors.capacidad ? "border-red-500 bg-red-50" : "border-gray-200"}
+                  disabled:bg-gray-100 disabled:cursor-not-allowed transition-all resize-none
+                  ${errors.description ? "border-red-500 bg-red-50" : "border-gray-200"}
                 `}
-                {...register("capacidad", { valueAsNumber: true })}
+                {...register("description")}
               />
             </div>
-            {errors.capacidad && (
-              <p className="text-red-500 text-xs mt-1 ml-1">{errors.capacidad.message}</p>
+            {errors.description && (
+              <p className="text-red-500 text-xs mt-1 ml-1">{errors.description.message}</p>
             )}
           </div>
 

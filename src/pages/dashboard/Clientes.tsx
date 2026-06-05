@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Search, Plus, Building2, Edit, Trash2, ChevronRight } from "lucide-react";
 import { useGetClientes, useCreateCliente } from "../../hooks/useCliente";
 import type { CreateClienteRequest } from "../../schemas/cliente.schema";
-import CrearClienteModal from "../../components/auth/clientes/CrearClienteModal";
+import CrearClienteModal from "../../components/clientes/CrearClienteModal";
 
 export default function Clientes() {
   const navigate = useNavigate();

@@ -5,7 +5,7 @@ import { Search, Plus, Building2, ChevronRight, Home, Edit, Trash2 } from "lucid
 import { useGetSedesByCliente, useGetClientes } from "../../hooks/useCliente";
 import { useCreateSede } from "../../hooks/useSede";
 import type { CreateSedeRequest } from "../../schemas/sede.schema";
-import CrearSedeModal from "../../components/auth/sedes/CrearSedeModal";
+import CrearSedeModal from "../../components/sedes/CrearSedeModal";
 
 export default function ClienteSedes() {
   const { clienteId } = useParams();

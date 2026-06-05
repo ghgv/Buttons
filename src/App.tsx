@@ -9,6 +9,7 @@ import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 
 // Rutas Privadas - Principales
+import Alertas from "./pages/dashboard/Alertas";
 import Dashboard from "./pages/dashboard/Dashboard";
 import Clientes from "./pages/dashboard/Clientes";
 import Usuarios from "./pages/dashboard/Usuarios";
@@ -36,6 +37,7 @@ function App() {
       <Route element={<RoutePrivate isAuthenticated={isAuthenticated} />}>
         {/* Rutas principales */}
         <Route path="dashboard" element={<Dashboard />} />
+         <Route path="alertas" element={<Alertas />} />
         <Route path="clientes" element={<Clientes />} />
         <Route path="usuarios" element={<Usuarios />} />
         <Route path="settings" element={<Settings />} />

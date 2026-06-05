@@ -6,7 +6,7 @@ import { useCreateNivel, useGetNivelesBySede } from "../../hooks/useNivel";
 import { useGetSedesByCliente } from "../../hooks/useCliente";
 import { useGetClientes } from "../../hooks/useCliente";
 import type { CreateNivelRequest } from "../../schemas/nivel.schema";
-import CrearNivelModal from "../../components/auth/niveles/CrearNivelModal";
+import CrearNivelModal from "../../components/niveles/CrearNivelModal";
 
 export default function ClienteSedesNiveles() {
   const { clienteId, sedeId } = useParams();

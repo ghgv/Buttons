@@ -5,7 +5,6 @@ import App from './App.tsx'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'sonner';
-// import { env } from './config/env.config.ts';
 
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -2,7 +2,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Building2, Mail, MapPin, Hash } from "lucide-react";
-import { createClienteSchema, type CreateClienteRequest } from "../../../schemas/cliente.schema";
+import { createClienteSchema, type CreateClienteRequest } from "../../schemas/cliente.schema";
 
 interface CrearClienteModalProps {
   isOpen: boolean;
