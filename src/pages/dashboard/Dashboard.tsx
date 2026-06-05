@@ -37,6 +37,14 @@ import { useGetClientes } from "../../hooks/useCliente";
 
 const COLORS = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
 
+// Orden fijo de los tipos de alertas (no cambia de posición)
+const ALERTAS_ORDER = [
+  { key: 'sinPapel', name: '🧻 Sin Papel', color: '#f59e0b' },
+  { key: 'sucio', name: '🧹 Sucio', color: '#ef4444' },
+  { key: 'malOlor', name: '👃 Mal Olor', color: '#8b5cf6' },
+  { key: 'sinJabon', name: '🧼 Sin Jabón', color: '#06b6d4' }
+];
+
 export default function Dashboard() {
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [selectedSede, setSelectedSede] = useState<string>("");
@@ -67,7 +75,7 @@ export default function Dashboard() {
     return metrics.eventos.filter((evento: any) => evento.sede === selectedSede);
   }, [metrics?.eventos, selectedSede]);
 
-  // ✅ Calcular niveles y baños únicos de los eventos filtrados
+  // Calcular niveles y baños únicos de los eventos filtrados
   const getFilteredInfraestructura = useMemo(() => {
     if (!filteredEventos.length) {
       return { uniqueNiveles: 0, uniqueBanios: 0 };
@@ -80,7 +88,6 @@ export default function Dashboard() {
       if (evento.nivel) {
         nivelesSet.add(evento.nivel);
       }
-      // Usar una combinación de sede+nivel+genero para identificar baños únicos
       if (evento.sede && evento.nivel && evento.genero_bano) {
         const banoKey = `${evento.sede}-${evento.nivel}-${evento.genero_bano}`;
         baniosSet.add(banoKey);
@@ -95,7 +102,7 @@ export default function Dashboard() {
 
   const handleClientChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedClientId(e.target.value);
-    setSelectedSede(""); // Resetear sede al cambiar cliente
+    setSelectedSede("");
   };
 
   const handleFilterApply = () => {
@@ -129,30 +136,45 @@ export default function Dashboard() {
     })).slice(-7);
   };
 
-  // Procesar datos para gráfico de BOTONERAS (Alertas por tipo)
-  const getAlertasByTipo = () => {
-    if (!filteredEventos.length) return [];
+  // Procesar datos para gráfico de BARRAS APILADAS (Alertas por Sede y Tipo)
+  const getSedesAlertasData = () => {
+    if (!metrics?.eventos) return [];
 
-    const alertasByTipo: { [key: string]: number } = {};
+    const sedesMap: { [key: string]: { sinPapel: number; sucio: number; malOlor: number; sinJabon: number } } = {};
 
-    filteredEventos.forEach((evento: any) => {
+    metrics.eventos.forEach((evento: any) => {
       if (evento.tipo_evento === 'alerta') {
-        const tipo = evento.detalle_evento;
-        alertasByTipo[tipo] = (alertasByTipo[tipo] || 0) + 1;
+        const sede = evento.sede;
+        if (!sedesMap[sede]) {
+          sedesMap[sede] = { sinPapel: 0, sucio: 0, malOlor: 0, sinJabon: 0 };
+        }
+
+        switch (evento.detalle_evento) {
+          case 'Baño sin papel':
+            sedesMap[sede].sinPapel += 1;
+            break;
+          case 'Baño sucio':
+            sedesMap[sede].sucio += 1;
+            break;
+          case 'mal olor':
+            sedesMap[sede].malOlor += 1;
+            break;
+          case 'Baño sin jabon':
+            sedesMap[sede].sinJabon += 1;
+            break;
+          default:
+            break;
+        }
       }
     });
 
-    const tipoMap: { [key: string]: string } = {
-      'Baño sin papel': '🧻 Sin Papel',
-      'Baño sucio': '🧹 Sucio',
-      'mal olor': '👃 Mal Olor',
-      'Baño sin jabon': '🧼 Sin Jabón'
-    };
-
-    return Object.entries(alertasByTipo).map(([tipo, cantidad]) => ({
-      name: tipoMap[tipo] || tipo,
-      cantidad
-    }));
+    // Convertir a array y ordenar por nombre de sede
+    return Object.entries(sedesMap)
+      .map(([sede, data]) => ({
+        sede,
+        ...data
+      }))
+      .sort((a, b) => a.sede.localeCompare(b.sede));
   };
 
   // Procesar datos para gráfico de uso por género (Pastel)
@@ -216,7 +238,7 @@ export default function Dashboard() {
   };
 
   const eventosPorDia = getEventsByDay();
-  const alertasPorTipo = getAlertasByTipo();
+  const sedesAlertasData = getSedesAlertasData();
   const usoPorGenero = getUsoByGenero();
   const flujoPersonas = getFlujoPersonas();
   const { totalIngresos, totalAlertas } = getFilteredStats();
@@ -349,7 +371,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* ✅ Card de Total Niveles - Ahora se actualiza con el filtro */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-all">
           <div className="flex items-center justify-between">
             <div>
@@ -364,7 +385,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* ✅ Card de Total Baños - Ahora se actualiza con el filtro */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-all">
           <div className="flex items-center justify-between">
             <div>
@@ -481,40 +501,67 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Gráfico 2: BARRAS - Botoneras (Alertas) */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Alertas de Botoneras</h3>
-                <p className="text-sm text-gray-500">
-                  {selectedSede ? `Sede: ${selectedSede}` : 'Reportes de los botones en los baños'}
-                </p>
-              </div>
-              <AlertTriangle size={20} className="text-gray-400" />
-            </div>
-            {alertasPorTipo.length === 0 ? (
-              <div className="flex items-center justify-center h-64 text-gray-400">
-                No hay alertas registradas
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={alertasPorTipo} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis type="number" stroke="#9ca3af" />
-                  <YAxis type="category" dataKey="name" width={100} stroke="#9ca3af" />
-                  <Tooltip
-                    formatter={(value: any) => [`${value} alertas`, 'Cantidad']}
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      borderColor: '#e5e7eb',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Bar dataKey="cantidad" fill="#f59e0b" radius={[0, 8, 8, 0]} name="Alertas" />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
+          {/* Gráfico 2: BARRAS APILADAS - Alertas por Sede y Tipo */}
+       {/* Gráfico 2: BARRAS APILADAS VERTICALES - Alertas por Sede y Tipo */}
+<div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+  <div className="flex items-center justify-between mb-4">
+    <div>
+      <h3 className="text-lg font-semibold text-gray-900">Alertas por Sede y Tipo</h3>
+      <p className="text-sm text-gray-500">
+        Distribución de alertas por sede y tipo de incidente
+      </p>
+    </div>
+    <AlertTriangle size={20} className="text-gray-400" />
+  </div>
+  {sedesAlertasData.length === 0 ? (
+    <div className="flex items-center justify-center h-64 text-gray-400">
+      No hay alertas registradas
+    </div>
+  ) : (
+    <ResponsiveContainer width="100%" height={400}>
+      <BarChart
+        data={sedesAlertasData}
+        layout="horizontal"
+        margin={{
+          top: 20,
+          right: 30,
+          left: 20,
+          bottom: 60,
+        }}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+        <XAxis 
+          dataKey="sede" 
+          stroke="#9ca3af" 
+          angle={-45} 
+          textAnchor="end" 
+          height={80}
+          interval={0}
+        />
+        <YAxis type="number" stroke="#9ca3af" />
+        <Tooltip
+          formatter={(value: any, name: any) => [`${value} alertas`, name]}
+          contentStyle={{
+            backgroundColor: 'white',
+            borderColor: '#e5e7eb',
+            borderRadius: '8px',
+          }}
+        />
+        <Legend />
+        {ALERTAS_ORDER.map((alerta) => (
+          <Bar 
+            key={alerta.key}
+            dataKey={alerta.key} 
+            stackId="a" 
+            fill={alerta.color} 
+            name={alerta.name}
+            radius={[8, 8, 0, 0]}
+          />
+        ))}
+      </BarChart>
+    </ResponsiveContainer>
+  )}
+</div>
 
           {/* Gráfico 3: Línea - Eventos por Día */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
