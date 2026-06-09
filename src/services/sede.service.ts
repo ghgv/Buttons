@@ -1,7 +1,8 @@
 // services/sede.service.ts
 import { api } from "../api/axios.client";
-import type { CreateSedeRequest, SedeResponse } from "../schemas/sede.schema";
+import type { CreateSedeRequest } from "../schemas/sede.schema";
 import axios from "axios";
+import type { SedeResponse } from "../types/sede.types";
 
 export const sedeService = {
   create: async (data: CreateSedeRequest): Promise<SedeResponse> => {

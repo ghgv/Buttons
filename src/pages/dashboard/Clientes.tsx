@@ -2,9 +2,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Plus, Building2, Edit, Trash2, ChevronRight } from "lucide-react";
-import { useGetClientes, useCreateCliente } from "../../hooks/useCliente";
+import { useGetClientes, useCreateCliente } from "../../hooks";
 import type { CreateClienteRequest } from "../../schemas/cliente.schema";
 import CrearClienteModal from "../../components/clientes/CrearClienteModal";
+import Loading from "../../components/ui/Loading";
 
 export default function Clientes() {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ export default function Clientes() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { data: clientes = [], isLoading } = useGetClientes();
   const { mutate: createCliente, isPending } = useCreateCliente();
+
 
   const handleCreateCliente = (data: CreateClienteRequest) => {
     createCliente(data, { onSuccess: () => setIsModalOpen(false) });
@@ -27,19 +29,10 @@ export default function Clientes() {
     );
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-500">Cargando clientes...</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <Loading text="Cargando Clientes..." />;
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+    <div className=" max-w-8xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>

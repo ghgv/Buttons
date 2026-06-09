@@ -3,12 +3,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { nivelService } from "../services/nivel.service";
-import type { CreateNivelRequest, NivelResponse } from "../schemas/nivel.schema";
+import type { NivelResponse } from "../types/nivel.types";
+import type { CreateNivelTypeSchema } from "../schemas/nivel.schema";
 
 export const useCreateNivel = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<NivelResponse, Error, CreateNivelRequest>({
+  return useMutation<NivelResponse, Error, CreateNivelTypeSchema>({
     mutationFn: (data) => nivelService.create(data),
     onSuccess: (data) => {
       toast.success(`¡Nivel ${data.name} creado exitosamente!`);

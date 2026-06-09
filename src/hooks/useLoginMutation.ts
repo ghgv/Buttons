@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { authService } from "../services/auth.service";
 import { useAuthStore } from "../store/auth.store";
-import type { LoginRequest, LoginResponse } from "../types/auth.types";
+import type { LoginResponse } from "../types/auth.types";
+import type { LoginRequest } from "../schemas/auth.schema";
 
 export const useLoginMutation = () => {
   const navigate = useNavigate();

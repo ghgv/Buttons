@@ -1,10 +1,11 @@
 // services/nivel.service.ts
 import { api } from "../api/axios.client";
-import type { CreateNivelRequest, NivelResponse } from "../schemas/nivel.schema";
+import type { CreateNivelTypeSchema } from "../schemas/nivel.schema";
 import axios from "axios";
+import type { NivelResponse } from "../types/nivel.types";
 
 export const nivelService = {
-  create: async (data: CreateNivelRequest): Promise<NivelResponse> => {
+  create: async (data: CreateNivelTypeSchema): Promise<NivelResponse> => {
     try {
       const { data: response } = await api.post<NivelResponse>("/levels", data);
       return response;
@@ -26,7 +27,7 @@ export const nivelService = {
     return data;
   },
 
-  update: async (id: string, data: Partial<CreateNivelRequest>): Promise<NivelResponse> => {
+  update: async (id: string, data: Partial<CreateNivelTypeSchema>): Promise<NivelResponse> => {
     const { data: response } = await api.put<NivelResponse>(`/levels/${id}`, data);
     return response;
   },

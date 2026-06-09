@@ -1,23 +1,30 @@
 // pages/dashboard/ClienteSedesNivelesBanios.tsx
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Search, Plus, Droplets, ChevronRight, Home, Trash2, Cpu, Radio, Activity, AlertTriangle } from "lucide-react";
-import { useGetNivelesBySede } from "../../hooks/useNivel";
-import { useGetSedesByCliente } from "../../hooks/useCliente";
-import { useGetClientes } from "../../hooks/useCliente";
-import { useGetBanosByLevel, useCreateBano } from "../../hooks/useBano";
-import { useGetContadoresByBathroom, useCreateContador, useDeleteContador } from "../../hooks/useContador";
-import { useGetBotonerasByBathroom, useCreateBotonera, useDeleteBotonera } from "../../hooks/useBotonera";
+import { useParams } from "react-router-dom";
+import { Search, Plus, Droplets, ChevronRight, Trash2, Cpu, Radio, Activity, AlertTriangle } from "lucide-react";
+
 import type { CreateBanoRequest } from "../../schemas/bano.schema";
-import type { CreateContadorRequest } from "../../schemas/contador.schema";
 import type { CreateBotoneraRequest } from "../../schemas/botonera.schema";
+import type { CreateContadorRequest } from "../../schemas/contador.schema";
 import AsignarContadorModal from "../../components/banos/AsignarContadorModal";
 import AsignarBotoneraModal from "../../components/banos/AsignarBotoneraModal";
 import CrearBanoModal from "../../components/banos/CrearBanoModal";
+import { 
+  useCreateBano, 
+  useCreateBotonera, 
+  useCreateContador, 
+  useDeleteBotonera, 
+  useDeleteContador, 
+  useGetBanosByLevel, 
+  useGetBotonerasByBathroom, 
+  useGetContadoresByBathroom, 
+  useGetNivelesBySede 
+} from "../../hooks";
+import Loading from "../../components/ui/Loading";
+import BackButton from "../../components/ui/BackButton";
 
 export default function ClienteSedesNivelesBanios() {
-  const { clienteId, sedeId, nivelId } = useParams();
-  const navigate = useNavigate();
+  const { sedeId, nivelId } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBano, setSelectedBano] = useState<any>(null);
@@ -27,20 +34,17 @@ export default function ClienteSedesNivelesBanios() {
   
   const { data: banos = [], isLoading: isLoadingBanos, refetch: refetchBanos } = useGetBanosByLevel(nivelId!);
   const { data: niveles = [] } = useGetNivelesBySede(sedeId!);
-  const { data: sedes = [] } = useGetSedesByCliente(clienteId!);
-  const { data: clientes = [] } = useGetClientes();
   const { mutate: createBano, isPending } = useCreateBano();
   const { mutate: createContador, isPending: isContadorPending } = useCreateContador();
   const { mutate: createBotonera, isPending: isBotoneraPending } = useCreateBotonera();
   const { mutate: deleteContador } = useDeleteContador();
   const { mutate: deleteBotonera } = useDeleteBotonera();
 
-  // Obtener dispositivos para cada baño cuando se expande
+  // ✅ Convertir expandedBano de string a número para los hooks
   const bathroomIdNumber = expandedBano ? parseInt(expandedBano) : null;
   const { data: contadores = [], refetch: refetchContadores } = useGetContadoresByBathroom(bathroomIdNumber);
   const { data: botoneras = [], refetch: refetchBotoneras } = useGetBotonerasByBathroom(bathroomIdNumber);
 
-  // Refrescar dispositivos cuando se expande un baño
   useEffect(() => {
     if (expandedBano) {
       refetchContadores();
@@ -48,8 +52,6 @@ export default function ClienteSedesNivelesBanios() {
     }
   }, [expandedBano, refetchContadores, refetchBotoneras]);
 
-  const cliente = clientes.find(c => c.id === clienteId);
-  const sede = sedes.find(s => s.id === sedeId);
   const nivel = niveles.find(n => n.id === sedeId);
 
   const filteredBanos = banos.filter((bano) =>
@@ -134,44 +136,16 @@ export default function ClienteSedesNivelesBanios() {
   };
 
   if (isLoadingBanos) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-500">Cargando baños...</p>
-        </div>
-      </div>
-    );
+    return <Loading text="Cargando baños..." />;
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto">
-      {/* Breadcrumb */}
-      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 mb-6">
-        <button onClick={() => navigate("/clientes")} className="hover:text-purple-600 transition-colors flex items-center gap-1">
-          <Home size={14} />
-          <span>Clientes</span>
-        </button>
-        <ChevronRight size={14} />
-        <button onClick={() => navigate(`/clientes/${clienteId}/sedes`)} className="hover:text-purple-600 transition-colors truncate max-w-[150px]">
-          {cliente?.name || "Cargando..."}
-        </button>
-        <ChevronRight size={14} />
-        <button onClick={() => navigate(`/clientes/${clienteId}/sedes`)} className="hover:text-purple-600 transition-colors truncate max-w-[150px]">
-          {sede?.name || "Cargando..."}
-        </button>
-        <ChevronRight size={14} />
-        <button onClick={() => navigate(`/clientes/${clienteId}/sedes/${sedeId}/niveles`)} className="hover:text-purple-600 transition-colors truncate max-w-[150px]">
-          {nivel?.name || "Cargando..."}
-        </button>
-        <ChevronRight size={14} />
-        <span className="text-purple-600 font-medium">Baños</span>
-      </div>
+    <div className="max-w-8xl mx-auto">
+      <BackButton />
 
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Baños de {nivel?.name || "..."}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Baños</h1>
           <p className="text-sm text-gray-500 mt-1">Gestiona los baños y sus dispositivos</p>
         </div>
         <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-xl">
@@ -179,7 +153,6 @@ export default function ClienteSedesNivelesBanios() {
         </button>
       </div>
 
-      {/* Buscador */}
       <div className="mb-6">
         <div className="relative max-w-md">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -193,7 +166,6 @@ export default function ClienteSedesNivelesBanios() {
         </div>
       </div>
 
-      {/* Lista de baños */}
       {filteredBanos.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
           <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -205,7 +177,7 @@ export default function ClienteSedesNivelesBanios() {
           <p className="text-sm text-gray-500 mb-4">
             {searchTerm 
               ? `No hay resultados para "${searchTerm}"`
-              : `Comienza creando el primer baño para ${nivel?.name}`
+              : "Comienza creando el primer baño"
             }
           </p>
           {!searchTerm && (
@@ -256,7 +228,6 @@ export default function ClienteSedesNivelesBanios() {
                   </div>
                 </div>
 
-                {/* Dispositivos expandidos */}
                 {expandedBano === bano.id && (
                   <div className="mt-4 pt-4 border-t border-gray-100">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -284,15 +255,9 @@ export default function ClienteSedesNivelesBanios() {
                                   <Activity size={14} className="text-green-600" />
                                   <span className="text-sm font-mono">{contador.serie}</span>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                  <button 
-                                    onClick={() => handleDeleteContador(contador.id)} 
-                                    className="text-red-500 hover:text-red-700 p-1"
-                                    title="Eliminar"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </div>
+                                <button onClick={() => handleDeleteContador(contador.id)} className="text-red-500 hover:text-red-700 p-1">
+                                  <Trash2 size={14} />
+                                </button>
                               </div>
                             ))}
                           </div>
@@ -323,15 +288,9 @@ export default function ClienteSedesNivelesBanios() {
                                   <AlertTriangle size={14} className="text-yellow-600" />
                                   <span className="text-sm font-mono">{botonera.serie}</span>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                  <button 
-                                    onClick={() => handleDeleteBotonera(botonera.id)} 
-                                    className="text-red-500 hover:text-red-700 p-1"
-                                    title="Eliminar"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </div>
+                                <button onClick={() => handleDeleteBotonera(botonera.id)} className="text-red-500 hover:text-red-700 p-1">
+                                  <Trash2 size={14} />
+                                </button>
                               </div>
                             ))}
                           </div>
@@ -344,7 +303,6 @@ export default function ClienteSedesNivelesBanios() {
             </div>
           ))}
           
-          {/* Contador de resultados */}
           <div className="text-center pt-4">
             <p className="text-xs text-gray-400">
               Mostrando {filteredBanos.length} de {banos.length} {banos.length === 1 ? 'baño' : 'baños'}
@@ -370,7 +328,7 @@ export default function ClienteSedesNivelesBanios() {
           setSelectedBano(null);
         }} 
         onCreate={handleAsignarContador} 
-        bathroomId={selectedBano?.id ? parseInt(selectedBano.id) : null}
+        bathroomId={selectedBano?.id ? parseInt(selectedBano.id) : 0}
         bathroomName={selectedBano?.name || ""} 
         isPending={isContadorPending} 
       />
@@ -382,7 +340,7 @@ export default function ClienteSedesNivelesBanios() {
           setSelectedBano(null);
         }} 
         onCreate={handleAsignarBotonera} 
-        bathroomId={selectedBano?.id ? parseInt(selectedBano.id) : null}
+        bathroomId={selectedBano?.id ? parseInt(selectedBano.id) : 0}
         bathroomName={selectedBano?.name || ""} 
         isPending={isBotoneraPending} 
       />

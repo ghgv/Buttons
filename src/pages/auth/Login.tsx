@@ -3,12 +3,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail, LogIn } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
-import { loginSchema } from "../../schemas/auth.schema";
-import type { LoginRequest } from "../../types/auth.types";
 import { useLoginMutation } from "../../hooks/useLoginMutation";
 import AuthRightPanel from "../../components/auth/AuthRightPanel";
 import PasswordInput from "../../components/auth/ui/PasswordInput";
 import { useAuth } from "../../hooks/useAuth"; 
+import { loginSchema, type LoginRequest } from "../../schemas/auth.schema";
 
 export default function Login() {
   const { mutate, isPending } = useLoginMutation();

@@ -81,11 +81,7 @@ export default function AsignarBotoneraModal({
     onClose();
   };
 
-  const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    console.log("🖱️ Botón 'Asignar Botonera' clickeado");
-    console.log("🖱️ isPending:", isPending);
-    console.log("🖱️ bathroomId actual:", bathroomId);
-  };
+  
 
   if (!isOpen) {
     console.log("🚪 Modal cerrado, no renderizando contenido");
@@ -153,7 +149,6 @@ export default function AsignarBotoneraModal({
             </button>
             <button 
               type="submit" 
-              onClick={handleButtonClick}
               disabled={isPending} 
               className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >

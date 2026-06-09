@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { banoService } from "../services/bano.service";
-import type { CreateBanoRequest, BanoResponse } from "../schemas/bano.schema";
+import type { CreateBanoRequest } from "../schemas/bano.schema";
+import type { BanoResponse } from "../types/bano.types";
 
 // Hook para crear un baño
 export const useCreateBano = () => {
@@ -75,7 +76,7 @@ export const useDeleteBano = () => {
 
   return useMutation<void, Error, string>({
     mutationFn: (id) => banoService.delete(id),
-    onSuccess: (_, id) => {
+    onSuccess: () => {
       toast.success("Baño eliminado exitosamente");
       queryClient.invalidateQueries({ queryKey: ["banos"] });
     },

@@ -1,7 +1,8 @@
 // services/bano.service.ts
 import { api } from "../api/axios.client";
-import type { CreateBanoRequest, BanoResponse } from "../schemas/bano.schema";
+import type { CreateBanoRequest } from "../schemas/bano.schema";
 import axios from "axios";
+import type { BanoResponse } from "../types/bano.types";
 
 export const banoService = {
   // Crear un nuevo baño

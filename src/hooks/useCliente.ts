@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { clienteService } from "../services/cliente.service";
 import type { CreateClienteRequest, ClienteResponse } from "../schemas/cliente.schema";
-import type { SedeResponse } from "../schemas/sede.schema";
+import type { SedeResponse } from "../types/sede.types";
 
 export const useCreateCliente = () => {
   const queryClient = useQueryClient();

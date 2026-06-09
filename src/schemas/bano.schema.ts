@@ -6,7 +6,7 @@ export const createBanoSchema = z.object({
   name: z
       .string()
     .min(1, { message: "El nombre del baño es requerido" }), 
-  gender: z.enum(["men", "female", "mixed", "unisex"], {
+  gender: z.enum(["men", "women", "mixed", "disabled"], {
     message: "Género de baño inválido",
   }),
   description: z.string().optional(),
@@ -14,12 +14,3 @@ export const createBanoSchema = z.object({
 
 export type CreateBanoRequest = z.infer<typeof createBanoSchema>;
 
-export interface BanoResponse {
-  id: string;
-  level_id: string;
-  name: string;
-  gender: "men" | "women" | "mixed" | "disabled";
-  description?: string;
-  created_at: string;
-  updated_at?: string;
-}

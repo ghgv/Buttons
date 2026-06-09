@@ -1,12 +1,12 @@
 // pages/dashboard/ClienteSedesNiveles.tsx
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Search, Plus, Eye, Hash, ChevronRight, Home } from "lucide-react";
-import { useCreateNivel, useGetNivelesBySede } from "../../hooks/useNivel";
-import { useGetSedesByCliente } from "../../hooks/useCliente";
-import { useGetClientes } from "../../hooks/useCliente";
-import type { CreateNivelRequest } from "../../schemas/nivel.schema";
+import { Search, Plus, Eye, Hash, ChevronRight } from "lucide-react";
 import CrearNivelModal from "../../components/niveles/CrearNivelModal";
+import type { CreateNivelTypeSchema } from "../../schemas/nivel.schema";
+import Loading from "../../components/ui/Loading";
+import { useCreateNivel, useGetNivelesBySede, useGetSedesByCliente } from "../../hooks";
+import BackButton from "../../components/ui/BackButton";
 
 export default function ClienteSedesNiveles() {
   const { clienteId, sedeId } = useParams();
@@ -15,11 +15,9 @@ export default function ClienteSedesNiveles() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { data: niveles = [], isLoading } = useGetNivelesBySede(sedeId!);
   const { data: sedes = [] } = useGetSedesByCliente(clienteId!);
-  const { data: clientes = [] } = useGetClientes();
   const { mutate: createNivel, isPending } = useCreateNivel();
 
   // Obtener nombres
-  const cliente = clientes.find(c => c.id === clienteId);
   const sede = sedes.find(s => s.id === sedeId);
 
   // Filtrar niveles por nombre o número de piso
@@ -28,46 +26,17 @@ export default function ClienteSedesNiveles() {
     String(nivel.floor).includes(searchTerm)
   );
 
-  const handleCreateNivel = (data: CreateNivelRequest) => {
+  const handleCreateNivel = (data: CreateNivelTypeSchema) => {
     createNivel(data, { onSuccess: () => setIsModalOpen(false) });
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-500">Cargando niveles...</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <Loading />;
+  
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+    <div className=" max-w-8xl mx-auto">
       {/* Breadcrumb - Navegación */}
-      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 mb-6">
-        <button onClick={() => navigate("/clientes")} className="hover:text-purple-600 transition-colors flex items-center gap-1">
-          <Home size={14} />
-          <span>Clientes</span>
-        </button>
-        <ChevronRight size={14} />
-        <button 
-          onClick={() => navigate(`/clientes/${clienteId}/sedes`)} 
-          className="hover:text-purple-600 transition-colors truncate max-w-[150px]"
-        >
-          {cliente?.name || "Cargando..."}
-        </button>
-        <ChevronRight size={14} />
-        <button 
-          onClick={() => navigate(`/clientes/${clienteId}/sedes`)} 
-          className="hover:text-purple-600 transition-colors truncate max-w-[150px]"
-        >
-          {sede?.name || "Cargando..."}
-        </button>
-        <ChevronRight size={14} />
-        <span className="text-purple-600 font-medium">Niveles</span>
-      </div>
+      <BackButton />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">

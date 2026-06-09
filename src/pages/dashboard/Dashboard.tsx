@@ -1,5 +1,7 @@
 // pages/dashboard/Dashboard.tsx
 import { useState, useMemo } from "react";
+import { useAuth } from "../../hooks/useAuth";
+import { useGetClientes } from "../../hooks/useCliente";
 import { useGetDashboardMetrics } from "../../hooks/useDashboard";
 import {
   LineChart,
@@ -33,11 +35,10 @@ import {
   AlertTriangle,
   MapPin
 } from "lucide-react";
-import { useGetClientes } from "../../hooks/useCliente";
 
 const COLORS = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
 
-// Orden fijo de los tipos de alertas (no cambia de posición)
+// Orden fijo de los tipos de alertas
 const ALERTAS_ORDER = [
   { key: 'sinPapel', name: '🧻 Sin Papel', color: '#f59e0b' },
   { key: 'sucio', name: '🧹 Sucio', color: '#ef4444' },
@@ -46,6 +47,7 @@ const ALERTAS_ORDER = [
 ];
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [selectedSede, setSelectedSede] = useState<string>("");
   const [fechaInicio, setFechaInicio] = useState<string>("");
@@ -56,53 +58,44 @@ export default function Dashboard() {
     selectedClientId ? parseInt(selectedClientId) : null
   );
 
-  // Obtener lista única de sedes de los eventos
+  // Obtener lista de todas las sedes (incluyendo las sin eventos)
   const sedesList = useMemo(() => {
-    if (!metrics?.eventos) return [];
-    const sedes = new Set<string>();
-    metrics.eventos.forEach((evento: any) => {
-      if (evento.sede) {
-        sedes.add(evento.sede);
-      }
-    });
-    return Array.from(sedes);
-  }, [metrics?.eventos]);
+    if (!metrics?.sedes_info) return [];
+    return metrics.sedes_info.map(sede => sede.name);
+  }, [metrics?.sedes_info]);
 
-  // Filtrar eventos por sede seleccionada
+  // Obtener todos los eventos (aplanando sedes_info)
+  const allEventos = useMemo(() => {
+    if (!metrics?.sedes_info) return [];
+    return metrics.sedes_info.flatMap(sede => sede.eventos);
+  }, [metrics?.sedes_info]);
+
+  // Filtrar eventos por sede seleccionada y fechas
   const filteredEventos = useMemo(() => {
-    if (!metrics?.eventos) return [];
-    if (!selectedSede) return metrics.eventos;
-    return metrics.eventos.filter((evento: any) => evento.sede === selectedSede);
-  }, [metrics?.eventos, selectedSede]);
-
-  // Calcular niveles y baños únicos de los eventos filtrados
-  const getFilteredInfraestructura = useMemo(() => {
-    if (!filteredEventos.length) {
-      return { uniqueNiveles: 0, uniqueBanios: 0 };
+    if (!allEventos.length) return [];
+    
+    let eventos = allEventos;
+    
+    if (selectedSede) {
+      eventos = eventos.filter(e => e.sede === selectedSede);
     }
     
-    const nivelesSet = new Set<string>();
-    const baniosSet = new Set<string>();
+    if (fechaInicio) {
+      eventos = eventos.filter(e => new Date(e.fecha_hora) >= new Date(fechaInicio));
+    }
     
-    filteredEventos.forEach((evento: any) => {
-      if (evento.nivel) {
-        nivelesSet.add(evento.nivel);
-      }
-      if (evento.sede && evento.nivel && evento.genero_bano) {
-        const banoKey = `${evento.sede}-${evento.nivel}-${evento.genero_bano}`;
-        baniosSet.add(banoKey);
-      }
-    });
+    if (fechaFin) {
+      eventos = eventos.filter(e => new Date(e.fecha_hora) <= new Date(fechaFin));
+    }
     
-    return {
-      uniqueNiveles: nivelesSet.size,
-      uniqueBanios: baniosSet.size
-    };
-  }, [filteredEventos]);
+    return eventos;
+  }, [allEventos, selectedSede, fechaInicio, fechaFin]);
 
   const handleClientChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedClientId(e.target.value);
     setSelectedSede("");
+    setFechaInicio("");
+    setFechaFin("");
   };
 
   const handleFilterApply = () => {
@@ -111,110 +104,10 @@ export default function Dashboard() {
     }
   };
 
-  // Procesar datos para gráfico de eventos por día (Línea)
-  const getEventsByDay = () => {
-    if (!filteredEventos.length) return [];
-
-    const eventsByDay: { [key: string]: { ingresos: number; alertas: number } } = {};
-
-    filteredEventos.forEach((evento: any) => {
-      const date = new Date(evento.fecha_hora).toLocaleDateString();
-      if (!eventsByDay[date]) {
-        eventsByDay[date] = { ingresos: 0, alertas: 0 };
-      }
-      if (evento.tipo_evento === 'ingreso') {
-        eventsByDay[date].ingresos += evento.valor;
-      } else {
-        eventsByDay[date].alertas += 1;
-      }
-    });
-
-    return Object.entries(eventsByDay).map(([fecha, data]) => ({
-      name: fecha,
-      ingresos: data.ingresos,
-      alertas: data.alertas
-    })).slice(-7);
-  };
-
-  // Procesar datos para gráfico de BARRAS APILADAS (Alertas por Sede y Tipo)
-  const getSedesAlertasData = () => {
-    if (!metrics?.eventos) return [];
-
-    const sedesMap: { [key: string]: { sinPapel: number; sucio: number; malOlor: number; sinJabon: number } } = {};
-
-    metrics.eventos.forEach((evento: any) => {
-      if (evento.tipo_evento === 'alerta') {
-        const sede = evento.sede;
-        if (!sedesMap[sede]) {
-          sedesMap[sede] = { sinPapel: 0, sucio: 0, malOlor: 0, sinJabon: 0 };
-        }
-
-        switch (evento.detalle_evento) {
-          case 'Baño sin papel':
-            sedesMap[sede].sinPapel += 1;
-            break;
-          case 'Baño sucio':
-            sedesMap[sede].sucio += 1;
-            break;
-          case 'mal olor':
-            sedesMap[sede].malOlor += 1;
-            break;
-          case 'Baño sin jabon':
-            sedesMap[sede].sinJabon += 1;
-            break;
-          default:
-            break;
-        }
-      }
-    });
-
-    // Convertir a array y ordenar por nombre de sede
-    return Object.entries(sedesMap)
-      .map(([sede, data]) => ({
-        sede,
-        ...data
-      }))
-      .sort((a, b) => a.sede.localeCompare(b.sede));
-  };
-
-  // Procesar datos para gráfico de uso por género (Pastel)
-  const getUsoByGenero = () => {
-    if (!filteredEventos.length) return [];
-
-    const usoByGenero: { [key: string]: number } = {};
-
-    filteredEventos.forEach((evento: any) => {
-      if (evento.tipo_evento === 'ingreso') {
-        const genero = evento.genero_bano === 'men' ? 'Hombres' :
-                      evento.genero_bano === 'women' ? 'Mujeres' :
-                      evento.genero_bano === 'mixed' ? 'Mixto' : 'Discapacitados';
-        usoByGenero[genero] = (usoByGenero[genero] || 0) + evento.valor;
-      }
-    });
-
-    return Object.entries(usoByGenero).map(([genero, total]) => ({
-      name: genero,
-      value: total
-    }));
-  };
-
-  // Procesar datos para gráfico de ÁREA (Flujo de personas)
-  const getFlujoPersonas = () => {
-    if (!filteredEventos.length) return [];
-
-    const ingresosByDay: { [key: string]: number } = {};
-
-    filteredEventos.forEach((evento: any) => {
-      if (evento.tipo_evento === 'ingreso') {
-        const date = new Date(evento.fecha_hora).toLocaleDateString();
-        ingresosByDay[date] = (ingresosByDay[date] || 0) + evento.valor;
-      }
-    });
-
-    return Object.entries(ingresosByDay).map(([fecha, total]) => ({
-      name: fecha,
-      personas: total
-    })).slice(-7);
+  const handleResetFilters = () => {
+    setSelectedSede("");
+    setFechaInicio("");
+    setFechaFin("");
   };
 
   // Calcular estadísticas filtradas
@@ -226,7 +119,7 @@ export default function Dashboard() {
     let totalIngresos = 0;
     let totalAlertas = 0;
     
-    filteredEventos.forEach((evento: any) => {
+    filteredEventos.forEach(evento => {
       if (evento.tipo_evento === 'ingreso') {
         totalIngresos += evento.valor;
       } else {
@@ -237,13 +130,234 @@ export default function Dashboard() {
     return { totalIngresos, totalAlertas };
   };
 
+  // Procesar datos para gráfico de eventos por día (Línea)
+  const getEventsByDay = () => {
+    if (!filteredEventos.length) return [];
+
+    const eventsByDay: { [key: string]: { ingresos: number; alertas: number } } = {};
+
+    filteredEventos.forEach(evento => {
+      const date = new Date(evento.fecha_hora).toLocaleDateString();
+      if (!eventsByDay[date]) {
+        eventsByDay[date] = { ingresos: 0, alertas: 0 };
+      }
+      if (evento.tipo_evento === 'ingreso') {
+        eventsByDay[date].ingresos += evento.valor;
+      } else {
+        eventsByDay[date].alertas += 1;
+      }
+    });
+
+    return Object.entries(eventsByDay)
+      .map(([fecha, data]) => ({
+        name: fecha,
+        ingresos: data.ingresos,
+        alertas: data.alertas
+      }))
+      .slice(-7);
+  };
+
+  // Procesar datos para gráfico de ALERTAS POR TIPO
+  const getAlertasByTipo = () => {
+    if (!filteredEventos.length) return [];
+
+    const alertasByTipo: { [key: string]: number } = {
+      '🧻 Sin Papel': 0,
+      '🧹 Sucio': 0,
+      '👃 Mal Olor': 0,
+      '🧼 Sin Jabón': 0
+    };
+
+    filteredEventos.forEach(evento => {
+      if (evento.tipo_evento === 'alerta') {
+        switch (evento.detalle_evento) {
+          case 'Baño sin papel':
+            alertasByTipo['🧻 Sin Papel']++;
+            break;
+          case 'Baño sucio':
+            alertasByTipo['🧹 Sucio']++;
+            break;
+          case 'Baño con mal olor':
+            alertasByTipo['👃 Mal Olor']++;
+            break;
+          case 'Baño sin jabon':
+            alertasByTipo['🧼 Sin Jabón']++;
+            break;
+          default:
+            break;
+        }
+      }
+    });
+
+    return Object.entries(alertasByTipo).map(([name, cantidad]) => ({
+      name,
+      cantidad
+    }));
+  };
+
+  // Procesar datos para gráfico de uso por género (Pastel)
+  const getUsoByGenero = () => {
+    if (!filteredEventos.length) return [];
+
+    const usoByGenero: { [key: string]: number } = {
+      'Hombres': 0,
+      'Mujeres': 0,
+      'Mixto': 0,
+      'Discapacitados': 0
+    };
+
+    filteredEventos.forEach(evento => {
+      if (evento.tipo_evento === 'ingreso') {
+        switch (evento.genero_bano) {
+          case 'men':
+            usoByGenero['Hombres'] += evento.valor;
+            break;
+          case 'women':
+            usoByGenero['Mujeres'] += evento.valor;
+            break;
+          case 'mixed':
+            usoByGenero['Mixto'] += evento.valor;
+            break;
+          case 'disabled':
+            usoByGenero['Discapacitados'] += evento.valor;
+            break;
+          default:
+            break;
+        }
+      }
+    });
+
+    return Object.entries(usoByGenero)
+      .filter(([_, value]) => value > 0)
+      .map(([name, value]) => ({ name, value }));
+  };
+
+  // Procesar datos para gráfico de ÁREA (Flujo de personas)
+  const getFlujoPersonas = () => {
+    if (!filteredEventos.length) return [];
+
+    const ingresosByDay: { [key: string]: number } = {};
+
+    filteredEventos.forEach(evento => {
+      if (evento.tipo_evento === 'ingreso') {
+        const date = new Date(evento.fecha_hora).toLocaleDateString();
+        ingresosByDay[date] = (ingresosByDay[date] || 0) + evento.valor;
+      }
+    });
+
+    return Object.entries(ingresosByDay)
+      .map(([fecha, total]) => ({
+        name: fecha,
+        personas: total
+      }))
+      .slice(-7);
+  };
+
+  // Procesar datos para gráfico de BARRAS APILADAS (Alertas por Sede o por Baño)
+  const getSedesOBanosAlertasData = () => {
+    if (!metrics?.sedes_info) return [];
+
+    // Si hay una sede seleccionada, mostrar baños de esa sede
+    if (selectedSede) {
+      const sedeSeleccionada = metrics.sedes_info.find(s => s.name === selectedSede);
+      if (!sedeSeleccionada || !sedeSeleccionada.eventos) return [];
+
+      const banosMap = new Map<string, { sinPapel: number; sucio: number; malOlor: number; sinJabon: number }>();
+
+      sedeSeleccionada.eventos.forEach(evento => {
+        if (evento.tipo_evento === 'alerta') {
+          const generoLabel = evento.genero_bano === 'men' ? 'Hombres' :
+                              evento.genero_bano === 'women' ? 'Mujeres' :
+                              evento.genero_bano === 'mixed' ? 'Mixto' : 'Discapacitados';
+          const banoKey = `${evento.nivel} - ${generoLabel}`;
+          
+          if (!banosMap.has(banoKey)) {
+            banosMap.set(banoKey, { sinPapel: 0, sucio: 0, malOlor: 0, sinJabon: 0 });
+          }
+
+          const stats = banosMap.get(banoKey)!;
+          switch (evento.detalle_evento) {
+            case 'Baño sin papel':
+              stats.sinPapel++;
+              break;
+            case 'Baño sucio':
+              stats.sucio++;
+              break;
+            case 'Baño con mal olor':
+              stats.malOlor++;
+              break;
+            case 'Baño sin jabon':
+              stats.sinJabon++;
+              break;
+            default:
+              break;
+          }
+        }
+      });
+
+      return Array.from(banosMap.entries())
+        .map(([bano, stats]) => ({
+          name: bano,
+          sinPapel: stats.sinPapel,
+          sucio: stats.sucio,
+          malOlor: stats.malOlor,
+          sinJabon: stats.sinJabon
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    // Sin filtro de sede: mostrar todas las sedes
+    return metrics.sedes_info.map(sede => {
+      if (!sede.eventos || sede.eventos.length === 0) {
+        return {
+          name: sede.name,
+          sinPapel: 0,
+          sucio: 0,
+          malOlor: 0,
+          sinJabon: 0
+        };
+      }
+
+      const alertas = sede.eventos.filter(e => e.tipo_evento === 'alerta');
+      
+      const sinPapel = alertas.filter(a => a.detalle_evento === 'Baño sin papel').length;
+      const sucio = alertas.filter(a => a.detalle_evento === 'Baño sucio').length;
+      const malOlor = alertas.filter(a => a.detalle_evento === 'Baño con mal olor').length;
+      const sinJabon = alertas.filter(a => a.detalle_evento === 'Baño sin jabon').length;
+
+      return {
+        name: sede.name,
+        sinPapel,
+        sucio,
+        malOlor,
+        sinJabon
+      };
+    });
+  };
+
+  const getChartTitle = () => {
+    if (selectedSede) {
+      return `Alertas por Baño - ${selectedSede}`;
+    }
+    return "Alertas por Sede";
+  };
+
+  const getChartSubtitle = () => {
+    if (selectedSede) {
+      return "Distribución de alertas por baño en la sede seleccionada";
+    }
+    return "Distribución de alertas por sede";
+  };
+
   const eventosPorDia = getEventsByDay();
-  const sedesAlertasData = getSedesAlertasData();
+  const alertasPorTipo = getAlertasByTipo();
   const usoPorGenero = getUsoByGenero();
   const flujoPersonas = getFlujoPersonas();
+  const sedesOBanosAlertasData = getSedesOBanosAlertasData();
   const { totalIngresos, totalAlertas } = getFilteredStats();
 
   const selectedCliente = clientes.find(c => c.id === selectedClientId);
+  const hasActiveFilters = selectedSede || fechaInicio || fechaFin;
 
   if (isLoadingClientes) {
     return (
@@ -257,9 +371,9 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-8">
+    <div className="space-y-6 ">
       {/* Header con selector de cliente */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <div className="">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Dashboard de Métricas</h1>
@@ -278,14 +392,13 @@ export default function Dashboard() {
                 <option value="">Seleccionar cliente</option>
                 {clientes.map((cliente) => (
                   <option key={cliente.id} value={cliente.id}>
-                    {cliente.name} - {cliente.nit}
+                    {cliente.name}
                   </option>
                 ))}
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
             </div>
 
-            {/* Filtro por Sede */}
             {selectedClientId && sedesList.length > 0 && (
               <div className="relative min-w-[180px]">
                 <select
@@ -333,6 +446,16 @@ export default function Dashboard() {
               <Filter size={16} />
               Aplicar filtros
             </button>
+
+            {hasActiveFilters && (
+              <button
+                onClick={handleResetFilters}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-xl transition-all duration-200"
+              >
+                <RefreshCw size={16} />
+                Limpiar
+              </button>
+            )}
           </div>
         </div>
 
@@ -348,6 +471,15 @@ export default function Dashboard() {
                   <span className="text-gray-400">|</span>
                   <span className="text-gray-500">Sede:</span>
                   <span className="font-semibold text-cyan-600">{selectedSede}</span>
+                </>
+              )}
+              {(fechaInicio || fechaFin) && (
+                <>
+                  <span className="text-gray-400">|</span>
+                  <span className="text-gray-500">Período:</span>
+                  <span className="font-semibold text-green-600">
+                    {fechaInicio || "Inicio"} - {fechaFin || "Fin"}
+                  </span>
                 </>
               )}
             </div>
@@ -376,7 +508,7 @@ export default function Dashboard() {
             <div>
               <p className="text-sm text-gray-500">Total Niveles</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">
-                {selectedSede ? getFilteredInfraestructura.uniqueNiveles : (metrics?.resumen_infraestructura?.total_levels || 0)}
+                {metrics?.resumen_infraestructura?.total_levels || 0}
               </p>
             </div>
             <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
@@ -390,7 +522,7 @@ export default function Dashboard() {
             <div>
               <p className="text-sm text-gray-500">Total Baños</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">
-                {selectedSede ? getFilteredInfraestructura.uniqueBanios : (metrics?.resumen_infraestructura?.total_bathrooms || 0)}
+                {metrics?.resumen_infraestructura?.total_bathrooms || 0}
               </p>
             </div>
             <div className="w-10 h-10 rounded-xl bg-cyan-100 flex items-center justify-center">
@@ -459,7 +591,7 @@ export default function Dashboard() {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">Flujo de Personas</h3>
                 <p className="text-sm text-gray-500">
-                  {selectedSede ? `Sede: ${selectedSede}` : 'Ingresos diarios - Todas las sedes'}
+                  {selectedSede ? `Sede: ${selectedSede}` : 'Ingresos diarios'}
                 </p>
               </div>
               <AreaChartIcon size={20} className="text-gray-400" />
@@ -501,67 +633,65 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Gráfico 2: BARRAS APILADAS - Alertas por Sede y Tipo */}
-       {/* Gráfico 2: BARRAS APILADAS VERTICALES - Alertas por Sede y Tipo */}
-<div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-  <div className="flex items-center justify-between mb-4">
-    <div>
-      <h3 className="text-lg font-semibold text-gray-900">Alertas por Sede y Tipo</h3>
-      <p className="text-sm text-gray-500">
-        Distribución de alertas por sede y tipo de incidente
-      </p>
-    </div>
-    <AlertTriangle size={20} className="text-gray-400" />
-  </div>
-  {sedesAlertasData.length === 0 ? (
-    <div className="flex items-center justify-center h-64 text-gray-400">
-      No hay alertas registradas
-    </div>
-  ) : (
-    <ResponsiveContainer width="100%" height={400}>
-      <BarChart
-        data={sedesAlertasData}
-        layout="horizontal"
-        margin={{
-          top: 20,
-          right: 30,
-          left: 20,
-          bottom: 60,
-        }}
-      >
-        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-        <XAxis 
-          dataKey="sede" 
-          stroke="#9ca3af" 
-          angle={-45} 
-          textAnchor="end" 
-          height={80}
-          interval={0}
-        />
-        <YAxis type="number" stroke="#9ca3af" />
-        <Tooltip
-          formatter={(value: any, name: any) => [`${value} alertas`, name]}
-          contentStyle={{
-            backgroundColor: 'white',
-            borderColor: '#e5e7eb',
-            borderRadius: '8px',
-          }}
-        />
-        <Legend />
-        {ALERTAS_ORDER.map((alerta) => (
-          <Bar 
-            key={alerta.key}
-            dataKey={alerta.key} 
-            stackId="a" 
-            fill={alerta.color} 
-            name={alerta.name}
-            radius={[8, 8, 0, 0]}
-          />
-        ))}
-      </BarChart>
-    </ResponsiveContainer>
-  )}
-</div>
+          {/* Gráfico 2: BARRAS VERTICALES - Alertas por Sede o por Baño (dinámico) */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">{getChartTitle()}</h3>
+                <p className="text-sm text-gray-500">{getChartSubtitle()}</p>
+              </div>
+              <AlertTriangle size={20} className="text-gray-400" />
+            </div>
+            {sedesOBanosAlertasData.length === 0 || sedesOBanosAlertasData.every(s => s.sinPapel === 0 && s.sucio === 0 && s.malOlor === 0 && s.sinJabon === 0) ? (
+              <div className="flex items-center justify-center h-64 text-gray-400">
+                No hay alertas registradas
+                {selectedSede && ` para la sede "${selectedSede}"`}
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart
+                  data={sedesOBanosAlertasData}
+                  margin={{
+                    top: 20,
+                    right: 30,
+                    left: 20,
+                    bottom: 60,
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="name" 
+                    stroke="#9ca3af" 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={80}
+                    interval={0}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <YAxis stroke="#9ca3af" />
+                  <Tooltip
+                    formatter={(value: any, name: any) => [`${value} alertas`, name]}
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      borderColor: '#e5e7eb',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Legend />
+                  {ALERTAS_ORDER.map((alerta) => (
+                    <Bar 
+                      key={alerta.key}
+                      dataKey={alerta.key} 
+                      stackId="a" 
+                      fill={alerta.color} 
+                      name={alerta.name}
+                      radius={[8, 8, 0, 0]}
+                    />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
 
           {/* Gráfico 3: Línea - Eventos por Día */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
@@ -569,7 +699,7 @@ export default function Dashboard() {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">Eventos por Día</h3>
                 <p className="text-sm text-gray-500">
-                  {selectedSede ? `Sede: ${selectedSede}` : 'Comparativa de ingresos y alertas'}
+                  {selectedSede ? `Sede: ${selectedSede}` : 'Ingresos vs Alertas'}
                 </p>
               </div>
               <LineChartIcon size={20} className="text-gray-400" />
@@ -621,7 +751,7 @@ export default function Dashboard() {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">Uso por Género</h3>
                 <p className="text-sm text-gray-500">
-                  {selectedSede ? `Sede: ${selectedSede}` : 'Distribución de ingresos por género'}
+                  Distribución de ingresos
                 </p>
               </div>
               <PieChartIcon size={20} className="text-gray-400" />
@@ -657,6 +787,41 @@ export default function Dashboard() {
                     }}
                   />
                 </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          {/* Gráfico 5: Barras - Alertas por Tipo (ancho completo) */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 lg:col-span-2">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Alertas por Tipo</h3>
+                <p className="text-sm text-gray-500">
+                  Distribución de tipos de alertas
+                </p>
+              </div>
+              <AlertTriangle size={20} className="text-gray-400" />
+            </div>
+            {alertasPorTipo.length === 0 || alertasPorTipo.every(a => a.cantidad === 0) ? (
+              <div className="flex items-center justify-center h-64 text-gray-400">
+                No hay alertas registradas
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={alertasPorTipo}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="name" stroke="#9ca3af" />
+                  <YAxis stroke="#9ca3af" />
+                  <Tooltip
+                    formatter={(value: any) => [`${value} alertas`, 'Cantidad']}
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      borderColor: '#e5e7eb',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Bar dataKey="cantidad" fill="#f59e0b" radius={[8, 8, 0, 0]} name="Alertas" />
+                </BarChart>
               </ResponsiveContainer>
             )}
           </div>

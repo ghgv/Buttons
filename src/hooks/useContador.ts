@@ -3,9 +3,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { contadorService } from "../services/contador.service";
-import type { CreateContadorRequest, ContadorResponse } from "../schemas/contador.schema";
+import type { CreateContadorRequest } from "../schemas/contador.schema";
+import type { ContadorResponse } from "../types/contador.types";
 
-// ✅ Hook para CREAR un contador
+// Hook para CREAR un contador
 export const useCreateContador = () => {
   const queryClient = useQueryClient();
 
@@ -13,7 +14,6 @@ export const useCreateContador = () => {
     mutationFn: (data) => contadorService.create(data),
     onSuccess: (data) => {
       toast.success(`¡Contador ${data.serie} creado exitosamente!`);
-      // Invalida la query para refrescar la lista
       queryClient.invalidateQueries({ queryKey: ["contadores", data.bathroom_id] });
     },
     onError: (error) => {
@@ -29,12 +29,12 @@ export const useCreateContador = () => {
   });
 };
 
-// ✅ Hook para OBTENER todos los contadores de un baño
+// Hook para OBTENER todos los contadores de un baño
 export const useGetContadoresByBathroom = (bathroomId: number | null) => {
   return useQuery<ContadorResponse[], Error>({
     queryKey: ["contadores", bathroomId],
     queryFn: () => contadorService.getByBathroomId(bathroomId!),
-    enabled: !!bathroomId, // Solo se ejecuta si hay bathroomId
+    enabled: !!bathroomId,
   });
 };
 

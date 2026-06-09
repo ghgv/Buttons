@@ -1,18 +1,24 @@
 // pages/dashboard/ClienteSedes.tsx
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Search, Plus, Building2, ChevronRight, Home, Edit, Trash2 } from "lucide-react";
-import { useGetSedesByCliente, useGetClientes } from "../../hooks/useCliente";
-import { useCreateSede } from "../../hooks/useSede";
+import { Search, Plus, Building2, ChevronRight, Edit, Trash2 } from "lucide-react";
 import type { CreateSedeRequest } from "../../schemas/sede.schema";
 import CrearSedeModal from "../../components/sedes/CrearSedeModal";
+import { useCreateSede, useGetSedesByCliente, useGetClientes } from "../../hooks";
+import Loading from "../../components/ui/Loading";
+import BackButton from "../../components/ui/BackButton";
 
 export default function ClienteSedes() {
   const { clienteId } = useParams();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+   // ✅ Convertir clienteId de string a número
+// ✅ Convertir clienteId de string a número
+  
   const { data: sedes = [], isLoading } = useGetSedesByCliente(clienteId!);
+
   const { data: clientes = [] } = useGetClientes();
   const { mutate: createSede, isPending } = useCreateSede();
 
@@ -29,38 +35,18 @@ export default function ClienteSedes() {
     createSede(data, { onSuccess: () => setIsModalOpen(false) });
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-500">Cargando sedes...</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <Loading text="Cargando sedes..." />;
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+    <div className=" max-w-8xl mx-auto">
       {/* Breadcrumb - Navegación */}
-      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 mb-6">
-        <button onClick={() => navigate("/clientes")} className="hover:text-purple-600 transition-colors flex items-center gap-1">
-          <Home size={14} />
-          <span>Clientes</span>
-        </button>
-        <ChevronRight size={14} />
-        <span className="text-gray-900 font-medium truncate max-w-[200px]">
-          {cliente?.name || "Cargando..."}
-        </span>
-        <ChevronRight size={14} />
-        <span className="text-purple-600 font-medium">Sedes</span>
-      </div>
+      <BackButton />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-            Sedes de {cliente?.name || "..."}
+            Sedes
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Gestiona las sedes y ubicaciones de este cliente

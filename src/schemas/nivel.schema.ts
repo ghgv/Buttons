@@ -12,12 +12,5 @@ export const createNivelSchema = z.object({
     .min(0, { message: "El número de piso es requerido" }),
 });
 
-export type CreateNivelRequest = z.infer<typeof createNivelSchema>;
+export type CreateNivelTypeSchema = z.infer<typeof createNivelSchema>;
 
-export interface NivelResponse {
-  id: string;
-  sede_id: string;
-  name: string;
-  floor: number;
-  created_at?: string;
-}

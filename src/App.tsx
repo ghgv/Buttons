@@ -12,11 +12,10 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import Alertas from "./pages/dashboard/Alertas";
 import Dashboard from "./pages/dashboard/Dashboard";
 import Clientes from "./pages/dashboard/Clientes";
-import Usuarios from "./pages/dashboard/Usuarios";
-import Settings from "./pages/dashboard/Settings";
 import ClienteSedes from "./pages/dashboard/ClienteSedes";
 import ClienteSedesNiveles from "./pages/dashboard/ClienteSedesNiveles";
 import ClienteSedesNivelesBanios from "./pages/dashboard/ClienteSedesNivelesBanios";
+import Reportes from "./pages/dashboard/Reportes";
 
 // Rutas Privadas - Anidadas (Cliente -> Sedes -> Niveles -> Baños)
 
@@ -39,8 +38,7 @@ function App() {
         <Route path="dashboard" element={<Dashboard />} />
          <Route path="alertas" element={<Alertas />} />
         <Route path="clientes" element={<Clientes />} />
-        <Route path="usuarios" element={<Usuarios />} />
-        <Route path="settings" element={<Settings />} />
+        <Route path="reportes" element={<Reportes />} />
         
         {/* Rutas anidadas de Clientes -> Sedes */}
         <Route path="clientes/:clienteId/sedes" element={<ClienteSedes />} />

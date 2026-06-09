@@ -9,7 +9,7 @@ interface CrearSedeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (data: CreateSedeRequest) => void;
-  clientId: string | number; // ← Acepta ambos
+  clientId: string; // ← Acepta ambos
   clientName: string;
   isPending?: boolean;
 }
@@ -23,8 +23,6 @@ export default function CrearSedeModal({
   isPending = false 
 }: CrearSedeModalProps) {
   
-  // ✅ Convertir a string para el formulario
-  const clientIdString = String(clientId);
   
  
 
@@ -36,24 +34,23 @@ export default function CrearSedeModal({
   } = useForm<CreateSedeRequest>({
     resolver: zodResolver(createSedeSchema),
     defaultValues: {
-      client_id: clientIdString, // ← Usar string
+      client_id: clientId, // ← Usar string
       name: "",
       address: "",
     },
   });
 
   useEffect(() => {
-    if (isOpen && clientIdString) {
+    if (isOpen && clientId) {
       reset({
-        client_id: clientIdString,
+        client_id: clientId,
         name: "",
         address: "",
       });
     }
-  }, [isOpen, clientIdString, reset]);
+  }, [isOpen, clientId, reset]);
 
   const onSubmit = (data: CreateSedeRequest) => {
-    console.log("📝 Datos enviados:", data);
     onCreate(data);
     reset();
     onClose();
@@ -87,10 +84,10 @@ export default function CrearSedeModal({
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
           {/* Campo oculto con el valor convertido a string */}
-          <input type="hidden" {...register("client_id")} value={clientIdString} />
+          <input type="hidden" {...register("client_id")} value={clientId} />
 
           <div className="bg-purple-50 p-2 rounded text-xs text-purple-700 font-mono">
-            🔑 ID Cliente: {clientIdString}
+            🔑 ID Cliente: {clientId}
           </div>
 
           <div>

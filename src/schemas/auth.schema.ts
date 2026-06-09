@@ -10,3 +10,5 @@ export const loginSchema = z.object({
     .string()
     .min(4, { message: "La contraseña debe tener al menos 4 caracteres" }),
 });
+
+export type LoginRequest = z.infer<typeof loginSchema>;

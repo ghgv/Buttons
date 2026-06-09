@@ -3,12 +3,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Building2, Hash } from "lucide-react";
 import { useEffect } from "react";
-import { createNivelSchema, type CreateNivelRequest } from "../../schemas/nivel.schema";
+import { createNivelSchema, type CreateNivelTypeSchema } from "../../schemas/nivel.schema";
 
 interface CrearNivelModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (data: CreateNivelRequest) => void;
+  onCreate: (data: CreateNivelTypeSchema) => void;
   sedeId: string;
   sedeName: string;
   isPending?: boolean;
@@ -30,7 +30,7 @@ export default function CrearNivelModal({
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<CreateNivelRequest>({
+  } = useForm<CreateNivelTypeSchema>({
     resolver: zodResolver(createNivelSchema),
     defaultValues: {
       sede_id: sedeIdString,
@@ -49,8 +49,7 @@ export default function CrearNivelModal({
     }
   }, [isOpen, sedeIdString, reset]);
 
-  const onSubmit = (data: CreateNivelRequest) => {
-    console.log("📝 Datos del nivel:", data);
+  const onSubmit = (data: CreateNivelTypeSchema) => {
     onCreate(data);
     reset();
     onClose();

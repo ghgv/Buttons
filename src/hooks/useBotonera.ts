@@ -3,11 +3,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { botoneraService } from "../services/botonera.service";
-import type { CreateBotoneraRequest, BotoneraResponse } from "../schemas/botonera.schema";
+import type { CreateBotoneraRequest } from "../schemas/botonera.schema";
+import type { BotoneraResponse } from "../types/botonera.types";
 
-// Hook para crear una botonera
+// Hook para CREAR una botonera
 export const useCreateBotonera = () => {
   const queryClient = useQueryClient();
+
   return useMutation<BotoneraResponse, Error, CreateBotoneraRequest>({
     mutationFn: (data) => botoneraService.create(data),
     onSuccess: (data) => {
@@ -15,21 +17,28 @@ export const useCreateBotonera = () => {
       queryClient.invalidateQueries({ queryKey: ["botoneras", data.bathroom_id] });
     },
     onError: (error) => {
-      Swal.fire({ title: "Error", text: error.message, icon: "error" });
+      console.error("❌ Error en mutación:", error);
+      Swal.fire({
+        title: "Error al crear botonera",
+        text: error.message,
+        icon: "error",
+        confirmButtonText: "Reintentar",
+        confirmButtonColor: "#830AD1"
+      });
     },
   });
 };
 
-// ✅ Hook para obtener TODAS las botoneras de un baño
-export const useGetBotonerasByBathroom = (bathroomId: string) => {
+// Hook para OBTENER todas las botoneras de un baño
+export const useGetBotonerasByBathroom = (bathroomId: number | null) => {
   return useQuery<BotoneraResponse[], Error>({
     queryKey: ["botoneras", bathroomId],
-    queryFn: () => botoneraService.getByBathroomId(bathroomId),
-    enabled: !!bathroomId, // Solo se ejecuta si hay bathroomId
+    queryFn: () => botoneraService.getByBathroomId(bathroomId!),
+    enabled: !!bathroomId,
   });
 };
 
-// Hook para eliminar una botonera
+// Hook para ELIMINAR una botonera
 export const useDeleteBotonera = () => {
   const queryClient = useQueryClient();
   return useMutation<void, Error, string>({
@@ -39,7 +48,13 @@ export const useDeleteBotonera = () => {
       queryClient.invalidateQueries({ queryKey: ["botoneras"] });
     },
     onError: (error) => {
-      Swal.fire({ title: "Error", text: error.message, icon: "error" });
+      Swal.fire({
+        title: "Error al eliminar botonera",
+        text: error.message,
+        icon: "error",
+        confirmButtonText: "Reintentar",
+        confirmButtonColor: "#830AD1"
+      });
     },
   });
 };

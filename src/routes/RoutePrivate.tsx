@@ -2,15 +2,12 @@
 import { Navigate, Outlet, Link, useLocation } from "react-router";
 import { 
   LayoutDashboard, 
-  Users, 
-  Settings, 
   LogOut,
   Building2,
-  Menu,
-  X,
   ChevronLeft,
   ChevronRight,
-  AlertTriangle
+  AlertTriangle,
+  Sheet
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useState } from "react";
@@ -50,18 +47,12 @@ export default function RoutePrivate({ isAuthenticated }: PrivateLayoutProps) {
       label: "Clientes",
       description: "Gestión de clientes"
     },
-    { 
-      path: "/usuarios", 
-      icon: Users, 
-      label: "Usuarios",
-      description: "Administrar usuarios"
-    },
-    { 
-      path: "/settings", 
-      icon: Settings, 
-      label: "Configuración",
-      description: "Ajustes del sistema"
-    },
+    {
+      path: "/reportes",
+      icon: Sheet ,
+      label: "Reportes",
+      description: "Análisis y estadísticas"
+    }
   ];
 
   return (
@@ -159,7 +150,7 @@ export default function RoutePrivate({ isAuthenticated }: PrivateLayoutProps) {
             title={sidebarCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
           >
             {sidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-            {!sidebarCollapsed && <span>Colapsar menú</span>}
+            {!sidebarCollapsed}
           </button>
         </div>
 
@@ -174,7 +165,7 @@ export default function RoutePrivate({ isAuthenticated }: PrivateLayoutProps) {
             title={sidebarCollapsed ? "Cerrar Sesión" : ""}
           >
             <LogOut size={20} />
-            {!sidebarCollapsed && <span>Cerrar Sesión</span>}
+            {!sidebarCollapsed}
           </button>
         </div>
       </aside>
@@ -182,61 +173,7 @@ export default function RoutePrivate({ isAuthenticated }: PrivateLayoutProps) {
       {/* Contenido principal */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Navbar superior - Versión Mobile y Desktop */}
-        <nav className="bg-white shadow-md border-b border-gray-200">
-          <div className="px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              
-              {/* Logo y botón menú mobile */}
-              <div className="flex items-center gap-3">
-                {/* ✅ Botón para colapsar sidebar en desktop */}
-                <button
-                  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                  className="hidden lg:flex p-2 rounded-md text-gray-600 hover:bg-gray-100 transition-colors"
-                  title={sidebarCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
-                >
-                  {sidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-                </button>
-                
-                {/* Botón menú mobile */}
-                <button
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="lg:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100"
-                >
-                  {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                </button>
-                
-                <div className="lg:hidden">
-                  <h1 className="text-lg font-bold text-purple-900">Nubeware IoT</h1>
-                </div>
-              </div>
-
-              {/* Título de la página actual */}
-              <div className="hidden lg:block">
-                <h1 className="text-xl font-semibold text-gray-800">
-                  {menuItems.find(item => item.path === location.pathname)?.label || "Dashboard"}
-                </h1>
-              </div>
-
-              {/* Perfil usuario - Desktop */}
-              <div className="hidden lg:flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-700">{user?.name}</p>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                  {user?.name?.charAt(0) || "U"}
-                </div>
-              </div>
-
-              {/* Perfil usuario - Mobile */}
-              <div className="lg:hidden">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold">
-                  {user?.name?.charAt(0) || "U"}
-                </div>
-              </div>
-            </div>
-          </div>
-        </nav>
-
+      
         {/* Menú mobile desplegable */}
         {mobileMenuOpen && (
           <div className="lg:hidden bg-white shadow-lg border-b border-gray-200">

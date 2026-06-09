@@ -1,9 +1,32 @@
-// services/dashboard.service.ts
+// services/reporte.service.ts
 import { api } from "../api/axios.client";
-import type { DashboardMetricsResponse } from "../types/dashboard.types";
 import axios from "axios";
 
-export const dashboardService = {
+export interface EventoReporte {
+  fecha_hora: string;
+  sede: string;
+  nivel: string;
+  genero_bano: string;
+  dispositivo_serie: number;
+  tipo_evento: "ingreso" | "alerta";
+  detalle_evento: string;
+  valor: number;
+}
+
+export interface ResumenInfraestructura {
+  total_sedes: number;
+  total_levels: number;
+  total_bathrooms: number;
+}
+
+export interface DashboardMetricsResponse {
+  client_id: number;
+  resumen_infraestructura: ResumenInfraestructura;
+  total_eventos: number;
+  eventos: EventoReporte[];
+}
+
+export const reporteService = {
   getMetricsByClientId: async (clientId: number): Promise<DashboardMetricsResponse> => {
     try {
       console.log(`📊 Obteniendo métricas para cliente: ${clientId}`);

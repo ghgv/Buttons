@@ -16,11 +16,3 @@ export const createSedeSchema = z.object({
 export type CreateSedeRequest = z.infer<typeof createSedeSchema>;
 
 // Tipo para la respuesta del backend
-export interface SedeResponse {
-  id: string;
-  client_id: string;
-  name: string;
-  address: string;
-  created_at: string;
-  updated_at: string;
-}
