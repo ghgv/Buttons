@@ -24,23 +24,18 @@ def create_client(db: Session, client_data: ClientCreate):
             )
 
     new_client = Client(
-        id =client_data.id,
         nit=client_data.nit,
         name=client_data.name,
         email=client_data.email,
-        address=client_data.address,
-        lat=client_data.lat,
-        lon=client_data.lon
+        address=client_data.address
     )
 
     try:
 
         db.add(new_client)
         
-        # 4. Confirmar los cambios en MySQL (Hacer el INSERT)
         db.commit()
         
-        # 5. Refrescar para obtener el ID autoincremental que asignó MySQL
         db.refresh(new_client)
         
         return new_client

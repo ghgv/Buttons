@@ -7,15 +7,6 @@ from app.services.levels import get_levels, create_level
 
 router = APIRouter(prefix="/levels", tags=["levels"])
 
-
-@router.get("/{sede_id}", status_code=status.HTTP_200_OK)
-def get_levels_by_sede_id(
-    sede_id: int,
-    db: Session = Depends(get_db),
-    # current_user=Depends(get_admin_user)  
-):
-    return get_levels(db, sede_id)
-
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_level_endpoint(
     level_in: LevelCreate, 
@@ -24,3 +15,10 @@ def create_level_endpoint(
 ):
     return create_level(db, level_in)
 
+@router.get("/{sede_id}", status_code=status.HTTP_200_OK)
+def get_levels_by_sede_id(
+    sede_id: int,
+    db: Session = Depends(get_db),
+    # current_user=Depends(get_admin_user)  
+):
+    return get_levels(db, sede_id)

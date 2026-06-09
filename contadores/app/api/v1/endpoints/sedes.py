@@ -11,14 +11,14 @@ router = APIRouter(prefix="/sedes", tags=["Gestión de Sedes"])
 def crear_sede(
     sede_in: SedeCreate, 
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_admin_user) # <- Aquí usamos el candado correcto
+    # current_user: dict = Depends(get_admin_user) # <- Aquí usamos el candado correcto
 ):
     return create_sede(db=db, sede_data=sede_in, client_id=sede_in.client_id)
 
 @router.get("/", status_code=status.HTTP_200_OK)
 def obtener_sedes(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_admin_user) # <- Aquí usamos el candado correcto
+    # current_user: dict = Depends(get_admin_user) # <- Aquí usamos el candado correcto
 ):
     return get_sedes(db=db, client_id=current_user["client_id"])
 

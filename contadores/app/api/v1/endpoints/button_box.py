@@ -1,10 +1,13 @@
-from fastapi import APIRouter, BackgroundTasks, Response, status, Depends
-from app.services.task_button_box import tarea_guardar_botonera, crear_botonera
+from fastapi import APIRouter, BackgroundTasks, Response, status, Depends, Query
+from app.services.task_button_box import tarea_guardar_botonera, crear_botonera, get_all_global_logs
 from app.services.task_button_box import obtener_botoneras_por_bano as obtener_botoneras_por_bano_service
-from app.models.models import Client, Sede, Level, Bathroom
+from app.models.models import Client, Sede, Level, Bathroom 
 from app.schemas.button_box import button_boxCreate
 from app.api.deps import get_admin_user, get_db
 from sqlalchemy.orm import Session
+
+
+
 
 router = APIRouter(prefix="/botonera", tags=["botonera"])
 
@@ -40,6 +43,18 @@ def crear_nueva_botonera(
     else:
         return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content="Error al crear la botonera")
 
+@router.get("/logs")
+def get_global_logs_endpoint(
+    limit: int = Query(100, ge=1, le=1000, description="Cantidad máxima de registros a devolver (máx 1000)"),
+    offset: int = Query(0, ge=0, description="Cantidad de registros a omitir (para paginación)"),
+    db: Session = Depends(get_db)
+):
+    """
+    Obtiene el historial global de todos los eventos (flujos de personas y alertas de botoneras),
+    ordenados desde el más reciente al más antiguo.
+    """
+    return get_all_global_logs(db=db, limit=limit, offset=offset)
+
 @router.get("/{bathroom_id}")
 def obtener_botoneras_por_bano(
     bathroom_id: int,
@@ -48,3 +63,5 @@ def obtener_botoneras_por_bano(
 ):
     botoneras = obtener_botoneras_por_bano_service(db, bathroom_id)
     return botoneras
+
+

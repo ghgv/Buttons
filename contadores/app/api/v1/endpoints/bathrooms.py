@@ -13,7 +13,6 @@ def crear_baño(
     db: Session = Depends(get_db),
     # current_user: dict = Depends(get_admin_user) # <- Aquí usamos el candado correcto
 ):
-    from app.services.bathroom import create_bathroom
     return create_bathroom(db=db, bathroom_data=bathroom_in)
 
 

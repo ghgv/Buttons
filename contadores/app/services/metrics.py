@@ -9,12 +9,25 @@ def metrics_by_id_client(db: Session, client_id: int):
     if not client:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
     
-    # 2. Mantenemos tus conteos de infraestructura (excelentes para tarjetas de resumen)
+    # 2. Conteos de infraestructura
     total_sedes = db.query(Sede).filter(Sede.client_id == client_id).count()
     total_levels = db.query(Level).join(Sede).filter(Sede.client_id == client_id).count()
     total_bathrooms = db.query(Bathroom).join(Level).join(Sede).filter(Sede.client_id == client_id).count()
     
-    # 3. Ejecutamos el query analítico para las gráficas
+    # 3. Obtenemos TODAS las sedes y las preparamos con un array vacío
+    sedes_db = db.query(Sede).filter(Sede.client_id == client_id).all()
+    
+    # Usamos un diccionario agrupado por el nombre de la sede para una búsqueda rápida (O(1))
+    sedes_agrupadas = {
+        sede.name: {
+            "id": sede.id,
+            "name": sede.name,
+            "eventos": []  # <-- Array vacío por defecto si no hay datos
+        }
+        for sede in sedes_db
+    }
+
+    # 4. Ejecutamos el query analítico
     query = text("""
         SELECT * FROM (
             SELECT 
@@ -56,10 +69,16 @@ def metrics_by_id_client(db: Session, client_id: int):
         ORDER BY fecha_hora DESC;
     """)
 
-    # Ejecutamos inyectando el client_id y mapeamos a diccionarios
     eventos_crudos = db.execute(query, {"client_id": client_id}).mappings().all()
     
-    # 4. Retornamos todo empaquetado para el frontend
+    # 5. Distribuimos los eventos en sus respectivas sedes
+    for evento in eventos_crudos:
+        nombre_sede = evento["sede"]
+        if nombre_sede in sedes_agrupadas:
+            # Convertimos el RowMapping a dict normal y lo agregamos al array
+            sedes_agrupadas[nombre_sede]["eventos"].append(dict(evento))
+
+    # 6. Retornamos el JSON estructurado
     return {
         "client_id": client_id,
         "resumen_infraestructura": {
@@ -68,5 +87,6 @@ def metrics_by_id_client(db: Session, client_id: int):
             "total_bathrooms": total_bathrooms
         },
         "total_eventos": len(eventos_crudos),
-        "eventos": eventos_crudos
+        # Convertimos el diccionario nuevamente a una lista para el frontend
+        "sedes_info": list(sedes_agrupadas.values()) 
     }

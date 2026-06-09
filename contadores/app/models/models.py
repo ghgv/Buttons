@@ -19,6 +19,11 @@ class UserRoleEnum(str, enum.Enum):
     supervisor = "supervisor"
 
 
+class AlertEnum (str, enum.Enum):
+    pending = "pending"
+    resolved = "resolved"
+    ignored = "ignored"
+
 
 class Client(Base):
     __tablename__ = "clients"
@@ -146,8 +151,9 @@ class Alert(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255))
     button_box_serie = Column(Integer, ForeignKey('button_box_1.serie'))
-    interactions = Column(Integer)
-
+    interaction_type = Column(String(255))
+    status = Column(Enum(AlertEnum), default=AlertEnum.pending)
+    create_time = Column(DateTime, nullable=False)
     # Relación: Permite acceder al objeto ButtonBox1 desde una alerta
     button_box = relationship("ButtonBox", backref="alerts")
 

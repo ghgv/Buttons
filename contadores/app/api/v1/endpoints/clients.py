@@ -13,15 +13,15 @@ router = APIRouter(prefix="/clients", tags=["Gestión de Clientes"])
 def registrar_nuevo_cliente(
     client_in: ClientCreate, 
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_admin_user) # <- Aquí usamos el candado correcto
+    # current_user: dict = Depends(get_admin_user) # <- Aquí usamos el candado correcto
 ):
     create_client(db=db, client_data=client_in)
-    return "ok"
+    return f"cliente creado"
 
 @router.get("/", status_code=status.HTTP_200_OK)   
 def obtener_clientes(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_admin_user) # <- Aquí usamos el candado correcto
+    # current_user: dict = Depends(get_admin_user) # <- Aquí usamos el candado correcto
 ):
     return get_clients(db=db)
 
@@ -32,4 +32,6 @@ def obtener_sedes_por_id_cliente(
     # current_user: dict = Depends(get_admin_user) # <- Aquí usamos el candado correcto
 ):
     return get_sedes_by_client_id(db=db, client_id=client_id)
+
+
 
