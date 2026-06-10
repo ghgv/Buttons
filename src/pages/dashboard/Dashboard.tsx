@@ -1,6 +1,5 @@
 // pages/dashboard/Dashboard.tsx
-import { useState, useMemo } from "react";
-import { useAuth } from "../../hooks/useAuth";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useGetClientes } from "../../hooks/useCliente";
 import { useGetDashboardMetrics } from "../../hooks/useDashboard";
 import {
@@ -24,7 +23,6 @@ import {
   Building2,
   Users,
   Droplets,
-  Calendar,
   RefreshCw,
   Activity,
   ChevronDown,
@@ -33,7 +31,7 @@ import {
   LineChart as LineChartIcon,
   AreaChart as AreaChartIcon,
   AlertTriangle,
-  MapPin
+  X
 } from "lucide-react";
 
 const COLORS = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
@@ -47,16 +45,36 @@ const ALERTAS_ORDER = [
 ];
 
 export default function Dashboard() {
-  const { user } = useAuth();
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [selectedSede, setSelectedSede] = useState<string>("");
   const [fechaInicio, setFechaInicio] = useState<string>("");
   const [fechaFin, setFechaFin] = useState<string>("");
+  const [filtrosModalOpen, setFiltrosModalOpen] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const { data: clientes = [], isLoading: isLoadingClientes } = useGetClientes();
   const { data: metrics, isLoading, error, refetch } = useGetDashboardMetrics(
     selectedClientId ? parseInt(selectedClientId) : null
   );
+
+  // Cerrar modal al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filtrosModalOpen && 
+          modalRef.current && 
+          !modalRef.current.contains(event.target as Node) &&
+          buttonRef.current && 
+          !buttonRef.current.contains(event.target as Node)) {
+        setFiltrosModalOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [filtrosModalOpen]);
 
   // Obtener lista de todas las sedes (incluyendo las sin eventos)
   const sedesList = useMemo(() => {
@@ -96,11 +114,13 @@ export default function Dashboard() {
     setSelectedSede("");
     setFechaInicio("");
     setFechaFin("");
+    setFiltrosModalOpen(false);
   };
 
   const handleFilterApply = () => {
     if (selectedClientId) {
       refetch();
+      setFiltrosModalOpen(false);
     }
   };
 
@@ -108,6 +128,7 @@ export default function Dashboard() {
     setSelectedSede("");
     setFechaInicio("");
     setFechaFin("");
+    setFiltrosModalOpen(false);
   };
 
   // Calcular estadísticas filtradas
@@ -131,30 +152,35 @@ export default function Dashboard() {
   };
 
   // Procesar datos para gráfico de eventos por día (Línea)
+  // Procesar datos para gráfico de eventos por día (Línea) - CORREGIDO
   const getEventsByDay = () => {
     if (!filteredEventos.length) return [];
 
     const eventsByDay: { [key: string]: { ingresos: number; alertas: number } } = {};
 
     filteredEventos.forEach(evento => {
-      const date = new Date(evento.fecha_hora).toLocaleDateString();
-      if (!eventsByDay[date]) {
-        eventsByDay[date] = { ingresos: 0, alertas: 0 };
+      const dateKey = evento.fecha_hora.split('T')[0];
+      if (!eventsByDay[dateKey]) {
+        eventsByDay[dateKey] = { ingresos: 0, alertas: 0 };
       }
       if (evento.tipo_evento === 'ingreso') {
-        eventsByDay[date].ingresos += evento.valor;
+        eventsByDay[dateKey].ingresos += evento.valor;
       } else {
-        eventsByDay[date].alertas += 1;
+        eventsByDay[dateKey].alertas += 1;
       }
     });
 
     return Object.entries(eventsByDay)
-      .map(([fecha, data]) => ({
-        name: fecha,
-        ingresos: data.ingresos,
-        alertas: data.alertas
-      }))
-      .slice(-7);
+      .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
+      .slice(-7)
+      .map(([fechaKey, data]) => {
+        const [year, month, day] = fechaKey.split('-');
+        return {
+          name: `${parseInt(day)}/${parseInt(month)}/${year}`,
+          ingresos: data.ingresos,
+          alertas: data.alertas
+        };
+      });
   };
 
   // Procesar datos para gráfico de ALERTAS POR TIPO
@@ -232,25 +258,37 @@ export default function Dashboard() {
       .map(([name, value]) => ({ name, value }));
   };
 
-  // Procesar datos para gráfico de ÁREA (Flujo de personas)
+  // Procesar datos para gráfico de ÁREA (Flujo de personas) - CORREGIDO
+  // Procesar datos para gráfico de ÁREA (Flujo de personas) - CORREGIDO
   const getFlujoPersonas = () => {
     if (!filteredEventos.length) return [];
 
+    // Agrupamos usando el string de fecha truncado (YYYY-MM-DD) para evitar problemas de parseo
     const ingresosByDay: { [key: string]: number } = {};
 
     filteredEventos.forEach(evento => {
       if (evento.tipo_evento === 'ingreso') {
-        const date = new Date(evento.fecha_hora).toLocaleDateString();
-        ingresosByDay[date] = (ingresosByDay[date] || 0) + evento.valor;
+        const dateKey = evento.fecha_hora.split('T')[0]; // Obtiene '2026-05-31'
+        ingresosByDay[dateKey] = (ingresosByDay[dateKey] || 0) + evento.valor;
       }
     });
 
-    return Object.entries(ingresosByDay)
-      .map(([fecha, total]) => ({
-        name: fecha,
-        personas: total
-      }))
-      .slice(-7);
+    // Ordenar las llaves (fechas ISO) de menor a mayor de forma nativa
+    const fechasOrdenadas = Object.keys(ingresosByDay).sort(
+      (a, b) => new Date(a).getTime() - new Date(b).getTime()
+    );
+    
+    // Tomar los últimos 7 días
+    const ultimasFechas = fechasOrdenadas.slice(-7);
+    
+    // Retornar los datos formateando la visualización al final
+    return ultimasFechas.map(fechaKey => {
+      const [year, month, day] = fechaKey.split('-');
+      return {
+        name: `${parseInt(day)}/${parseInt(month)}/${year}`, // Formato D/M/YYYY para el XAxis
+        personas: ingresosByDay[fechaKey]
+      };
+    });
   };
 
   // Procesar datos para gráfico de BARRAS APILADAS (Alertas por Sede o por Baño)
@@ -318,7 +356,16 @@ export default function Dashboard() {
         };
       }
 
-      const alertas = sede.eventos.filter(e => e.tipo_evento === 'alerta');
+      // Filtrar eventos por fechas si están seleccionadas
+      let eventosSede = sede.eventos;
+      if (fechaInicio) {
+        eventosSede = eventosSede.filter(e => new Date(e.fecha_hora) >= new Date(fechaInicio));
+      }
+      if (fechaFin) {
+        eventosSede = eventosSede.filter(e => new Date(e.fecha_hora) <= new Date(fechaFin));
+      }
+
+      const alertas = eventosSede.filter(e => e.tipo_evento === 'alerta');
       
       const sinPapel = alertas.filter(a => a.detalle_evento === 'Baño sin papel').length;
       const sucio = alertas.filter(a => a.detalle_evento === 'Baño sucio').length;
@@ -371,8 +418,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6 ">
-      {/* Header con selector de cliente */}
+    <div className="p-4 max-w-7xl mx-auto space-y-6">
+      {/* Header con selector de cliente y botón de filtros */}
       <div className="">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
@@ -399,69 +446,24 @@ export default function Dashboard() {
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
             </div>
 
-            {selectedClientId && sedesList.length > 0 && (
-              <div className="relative min-w-[180px]">
-                <select
-                  value={selectedSede}
-                  onChange={(e) => setSelectedSede(e.target.value)}
-                  className="appearance-none w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 text-gray-700 cursor-pointer"
-                >
-                  <option value="">Todas las sedes</option>
-                  {sedesList.map((sede) => (
-                    <option key={sede} value={sede}>
-                      {sede}
-                    </option>
-                  ))}
-                </select>
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-              </div>
-            )}
-
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-              <input
-                type="date"
-                value={fechaInicio}
-                onChange={(e) => setFechaInicio(e.target.value)}
-                className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm"
-              />
-            </div>
-
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-              <input
-                type="date"
-                value={fechaFin}
-                onChange={(e) => setFechaFin(e.target.value)}
-                className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm"
-              />
-            </div>
-
             <button
-              onClick={handleFilterApply}
+              ref={buttonRef}
+              onClick={() => setFiltrosModalOpen(!filtrosModalOpen)}
               disabled={!selectedClientId}
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Filter size={16} />
-              Aplicar filtros
+              Filtros
+              {hasActiveFilters && (
+                <span className="ml-1 w-2 h-2 bg-yellow-400 rounded-full"></span>
+              )}
             </button>
-
-            {hasActiveFilters && (
-              <button
-                onClick={handleResetFilters}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-xl transition-all duration-200"
-              >
-                <RefreshCw size={16} />
-                Limpiar
-              </button>
-            )}
           </div>
         </div>
 
         {selectedClientId && selectedCliente && (
           <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex flex-wrap items-center gap-2 text-sm">
               <span className="text-gray-500">Cliente seleccionado:</span>
               <span className="font-semibold text-purple-600">{selectedCliente.name}</span>
               <span className="text-gray-400">|</span>
@@ -486,6 +488,89 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Modal de filtros flotante - al lado del botón */}
+      {filtrosModalOpen && (
+        <div 
+          ref={modalRef}
+          className="fixed z-50 bg-white rounded-xl shadow-2xl w-80 overflow-hidden"
+          style={{
+            top: buttonRef.current ? buttonRef.current.getBoundingClientRect().bottom + 8 : 'auto',
+            right: buttonRef.current ? window.innerWidth - buttonRef.current.getBoundingClientRect().right : 'auto'
+          }}
+        >
+          <div className="flex items-center justify-between p-4 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <Filter size={18} className="text-purple-600" />
+              <h3 className="font-semibold text-gray-900">Filtros</h3>
+            </div>
+            <button
+              onClick={() => setFiltrosModalOpen(false)}
+              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X size={18} className="text-gray-500" />
+            </button>
+          </div>
+
+          <div className="p-4 space-y-4">
+            {sedesList.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Sede</label>
+                <div className="relative">
+                  <select
+                    value={selectedSede}
+                    onChange={(e) => setSelectedSede(e.target.value)}
+                    className="appearance-none w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 text-gray-700 cursor-pointer text-sm"
+                  >
+                    <option value="">Todas las sedes</option>
+                    {sedesList.map((sede) => (
+                      <option key={sede} value={sede}>{sede}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de inicio</label>
+              <input
+                type="date"
+                value={fechaInicio}
+                onChange={(e) => setFechaInicio(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 text-gray-700 text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de fin</label>
+              <input
+                type="date"
+                value={fechaFin}
+                onChange={(e) => setFechaFin(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 text-gray-700 text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-2 p-4 border-t border-gray-100 bg-gray-50">
+            <button
+              onClick={handleResetFilters}
+              className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-all duration-200 text-sm"
+            >
+              <RefreshCw size={14} />
+              Limpiar
+            </button>
+            <button
+              onClick={handleFilterApply}
+              className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-all duration-200 text-sm"
+            >
+              <Filter size={14} />
+              Aplicar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Cards de estadísticas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
@@ -592,13 +677,14 @@ export default function Dashboard() {
                 <h3 className="text-lg font-semibold text-gray-900">Flujo de Personas</h3>
                 <p className="text-sm text-gray-500">
                   {selectedSede ? `Sede: ${selectedSede}` : 'Ingresos diarios'}
+                  {fechaInicio && fechaFin && ` (${fechaInicio} al ${fechaFin})`}
                 </p>
               </div>
               <AreaChartIcon size={20} className="text-gray-400" />
             </div>
             {flujoPersonas.length === 0 ? (
               <div className="flex items-center justify-center h-64 text-gray-400">
-                No hay datos de ingresos
+                No hay datos de ingresos para el período seleccionado
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
@@ -633,7 +719,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Gráfico 2: BARRAS VERTICALES - Alertas por Sede o por Baño (dinámico) */}
+          {/* Gráfico 2: BARRAS VERTICALES - Alertas por Sede o por Baño */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -791,7 +877,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Gráfico 5: Barras - Alertas por Tipo (ancho completo) */}
+          {/* Gráfico 5: Barras - Alertas por Tipo */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
               <div>

@@ -34,7 +34,7 @@ export default function ClienteSedesNiveles() {
   
 
   return (
-    <div className=" max-w-8xl mx-auto">
+    <div className="p-4 max-w-7xl mx-auto">
       {/* Breadcrumb - Navegación */}
       <BackButton />
 

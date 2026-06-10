@@ -1,7 +1,6 @@
 // components/dashboard/AlertasPanel.tsx
 import { useState } from "react";
 import { 
-  AlertTriangle, 
   AlertCircle, 
   CheckCircle, 
   Clock, 

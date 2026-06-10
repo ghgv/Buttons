@@ -140,7 +140,7 @@ export default function ClienteSedesNivelesBanios() {
   }
 
   return (
-    <div className="max-w-8xl mx-auto">
+    <div className="p-4 max-w-7xl mx-auto">
       <BackButton />
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">

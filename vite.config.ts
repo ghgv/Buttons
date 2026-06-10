@@ -8,4 +8,12 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    host: true, // Esto equivale a usar --host para escuchar en todas las IPs
+    port: 5174,
+    allowedHosts: [
+      'www.dali.com.co',
+      'dali.com.co'     
+    ]
+  }
 })

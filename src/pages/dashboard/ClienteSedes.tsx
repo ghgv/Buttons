@@ -38,7 +38,7 @@ export default function ClienteSedes() {
   if (isLoading) return <Loading text="Cargando sedes..." />;
 
   return (
-    <div className=" max-w-8xl mx-auto">
+    <div className="p-4 max-w-7xl mx-auto">
       {/* Breadcrumb - Navegación */}
       <BackButton />
 
