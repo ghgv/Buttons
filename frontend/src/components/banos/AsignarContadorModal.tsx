@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Hash } from "lucide-react";
 import { useEffect } from "react";
-import { createContadorSchema, type CreateContadorRequest } from "../../schemas/contador.schema";
+import { createContadorSchema, type CreateContadorRequest } from "../../zod/contador.zod";
 
 interface AsignarContadorModalProps {
   isOpen: boolean;

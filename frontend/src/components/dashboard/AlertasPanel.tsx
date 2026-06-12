@@ -43,10 +43,10 @@ export default function AlertasPanel() {
 
   const getTipoLabel = (detalle: string) => {
     switch(detalle) {
-      case 'Baño sin papel': return '🧻 Falta Papel';
-      case 'Baño sucio': return '🧹 Baño Sucio';
-      case 'Baño con mal olor': return '👃 Mal Olor';
-      case 'Baño sin jabon': return '🧼 Falta Jabón';
+      case 'Baño sin papel': return 'Falta Papel';
+      case 'Baño sucio': return 'Baño Sucio';
+      case 'Baño con mal olor': return 'Mal Olor';
+      case 'Baño sin jabon': return 'Falta Jabón';
       default: return detalle;
     }
   };

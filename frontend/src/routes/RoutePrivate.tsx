@@ -59,22 +59,22 @@ export default function RoutePrivate({ isAuthenticated }: PrivateLayoutProps) {
       {/* Botón hamburguesa - Siempre visible */}
       <button
         onClick={() => setMenuOpen(true)}
-        className="fixed top-4 left-4 z-50 bg-purple-900 text-white p-2 rounded-lg shadow-lg hover:bg-purple-800 transition-colors"
+        className="fixed top-1 left-1 z-50 bg-purple-900 text-white p-1.5 rounded-md shadow-lg hover:bg-purple-800 transition-colors"
         aria-label="Abrir menú"
       >
-        <Menu size={24} />
+        <Menu size={20} />
       </button>
 
       {/* Menú flotante - Solo ocupa el espacio del contenido */}
       {menuOpen && (
-        <div className="fixed top-2 left-2 z-50">
-          <nav className="bg-white rounded-xl shadow-xl w-80 overflow-hidden">
+        <div className="fixed top-1 left-1 z-50">
+          <nav className="bg-white rounded-md shadow-xl w-70 overflow-hidden">
             {/* Cabecera con botón de cerrar */}
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-900 to-purple-700 flex items-center justify-center">
-                    <span className="text-white text-xl font-black">N</span>
+                    <span className="text-white text-xl font-black">ai</span>
                   </div>
                   <div>
                     <h2 className="text-lg font-bold text-gray-800">Nubeware</h2>
@@ -95,9 +95,6 @@ export default function RoutePrivate({ isAuthenticated }: PrivateLayoutProps) {
               {/* Información del usuario */}
               <div className="mt-4 pt-3 border-t border-gray-100">
                 <p className="text-sm font-medium text-gray-800">{user?.name || "Usuario"}</p>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {user?.role || "Usuario"}
-                </p>
               </div>
             </div>
 

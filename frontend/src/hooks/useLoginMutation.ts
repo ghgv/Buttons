@@ -5,7 +5,7 @@ import Swal from "sweetalert2";
 import { authService } from "../services/auth.service";
 import { useAuthStore } from "../store/auth.store";
 import type { LoginResponse } from "../types/auth.types";
-import type { LoginRequest } from "../schemas/auth.schema";
+import type { LoginRequest } from "../zod/auth.zod";
 
 export const useLoginMutation = () => {
   const navigate = useNavigate();

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Search, Plus, Eye, Hash, ChevronRight } from "lucide-react";
 import CrearNivelModal from "../../components/niveles/CrearNivelModal";
-import type { CreateNivelTypeSchema } from "../../schemas/nivel.schema";
+import type { CreateNivelTypeSchema } from "../../zod/nivel.zod";
 import Loading from "../../components/ui/Loading";
 import { useCreateNivel, useGetNivelesBySede, useGetSedesByCliente } from "../../hooks";
 import BackButton from "../../components/ui/BackButton";
@@ -30,7 +30,7 @@ export default function ClienteSedesNiveles() {
     createNivel(data, { onSuccess: () => setIsModalOpen(false) });
   };
 
-  if (isLoading) return <Loading />;
+  if (isLoading) return <Loading text="Cargando sedes"/>;
   
 
   return (

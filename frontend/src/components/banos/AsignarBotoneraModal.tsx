@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Hash } from "lucide-react";
 import { useEffect } from "react";
-import { createBotoneraSchema, type CreateBotoneraRequest } from "../../schemas/botonera.schema";
+import { createBotoneraSchema, type CreateBotoneraRequest } from "../../zod/botonera.zod";
 
 interface AsignarBotoneraModalProps {
   isOpen: boolean;

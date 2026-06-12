@@ -7,7 +7,7 @@ import { useLoginMutation } from "../../hooks/useLoginMutation";
 import AuthRightPanel from "../../components/auth/AuthRightPanel";
 import PasswordInput from "../../components/auth/ui/PasswordInput";
 import { useAuth } from "../../hooks/useAuth"; 
-import { loginSchema, type LoginRequest } from "../../schemas/auth.schema";
+import { loginSchema, type LoginRequest } from "../../zod/auth.zod";
 
 export default function Login() {
   const { mutate, isPending } = useLoginMutation();

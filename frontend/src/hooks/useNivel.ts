@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { nivelService } from "../services/nivel.service";
 import type { NivelResponse } from "../types/nivel.types";
-import type { CreateNivelTypeSchema } from "../schemas/nivel.schema";
+import type { CreateNivelTypeSchema } from "../zod/nivel.zod";
 
 export const useCreateNivel = () => {
   const queryClient = useQueryClient();

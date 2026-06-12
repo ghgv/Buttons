@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { sedeService } from "../services/sede.service";
-import type { CreateSedeRequest } from "../schemas/sede.schema";
+import type { CreateSedeRequest } from "../zod/sede.zod";
 import type { SedeResponse } from "../types/sede.types";
 
 export const useCreateSede = () => {

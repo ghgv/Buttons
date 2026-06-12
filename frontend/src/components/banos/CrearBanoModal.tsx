@@ -2,7 +2,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Droplets, Tag, Home, FileText } from "lucide-react";
-import { createBanoSchema, type CreateBanoRequest } from "../../schemas/bano.schema";
+import { createBanoSchema, type CreateBanoRequest } from "../../zod/bano.zod";
 
 interface CrearBanoModalProps {
   isOpen: boolean;

@@ -1,6 +1,6 @@
 import { api } from "../api/axios.client";
 import axios from "axios";
-import type { LoginRequest } from "../schemas/auth.schema";
+import type { LoginRequest } from "../zod/auth.zod";
 import type { LoginResponse } from "../types/auth.types";
 
 export const authService = {

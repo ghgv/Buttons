@@ -1,6 +1,6 @@
 // services/nivel.service.ts
 import { api } from "../api/axios.client";
-import type { CreateNivelTypeSchema } from "../schemas/nivel.schema";
+import type { CreateNivelTypeSchema } from "../zod/nivel.zod";
 import axios from "axios";
 import type { NivelResponse } from "../types/nivel.types";
 

@@ -1,6 +1,6 @@
 // services/botonera.service.ts
 import { api } from "../api/axios.client";
-import type { CreateBotoneraRequest } from "../schemas/botonera.schema";
+import type { CreateBotoneraRequest } from "../zod/botonera.zod";
 import type { BotoneraResponse } from "../types/botonera.types";
 import axios from "axios";
 

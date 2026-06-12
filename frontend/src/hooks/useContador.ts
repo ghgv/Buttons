@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { contadorService } from "../services/contador.service";
-import type { CreateContadorRequest } from "../schemas/contador.schema";
+import type { CreateContadorRequest } from "../zod/contador.zod";
 import type { ContadorResponse } from "../types/contador.types";
 
 // Hook para CREAR un contador

@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Building2, MapPin } from "lucide-react";
 import { useEffect } from "react";
-import { createSedeSchema, type CreateSedeRequest } from "../../schemas/sede.schema";
+import { createSedeSchema, type CreateSedeRequest } from "../../zod/sede.zod";
 
 interface CrearSedeModalProps {
   isOpen: boolean;

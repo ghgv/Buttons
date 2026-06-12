@@ -1,6 +1,9 @@
 // schemas/cliente.schema.ts
 import { z } from "zod";
 
+/**
+ * Esquema estricto de validación en tiempo de ejecución para el formulario de creación.
+ */
 export const createClienteSchema = z.object({
   nit: z
     .string()
@@ -20,16 +23,7 @@ export const createClienteSchema = z.object({
     .min(5, { message: "Dirección demasiado corta" }),
 });
 
+/**
+ * Tipo inferido de Zod para tipar la mutación de envío (Payload de la petición).
+ */
 export type CreateClienteRequest = z.infer<typeof createClienteSchema>;
-
-// Tipo para la respuesta del backend
-export interface ClienteResponse {
-  id: string;
-  nit: string;
-  name: string;
-  email: string;
-  address: string;
-  sensores: number;
-  estado: "Activo" | "Inactivo";
-  created_at: string;
-}

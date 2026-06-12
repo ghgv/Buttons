@@ -3,9 +3,9 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Search, Plus, Droplets, ChevronRight, Trash2, Cpu, Radio, Activity, AlertTriangle } from "lucide-react";
 
-import type { CreateBanoRequest } from "../../schemas/bano.schema";
-import type { CreateBotoneraRequest } from "../../schemas/botonera.schema";
-import type { CreateContadorRequest } from "../../schemas/contador.schema";
+import type { CreateBanoRequest } from "../../zod/bano.zod";
+import type { CreateBotoneraRequest } from "../../zod/botonera.zod";
+import type { CreateContadorRequest } from "../../zod/contador.zod";
 import AsignarContadorModal from "../../components/banos/AsignarContadorModal";
 import AsignarBotoneraModal from "../../components/banos/AsignarBotoneraModal";
 import CrearBanoModal from "../../components/banos/CrearBanoModal";

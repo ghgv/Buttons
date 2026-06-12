@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Search, Plus, Building2, ChevronRight, Edit, Trash2 } from "lucide-react";
-import type { CreateSedeRequest } from "../../schemas/sede.schema";
+import type { CreateSedeRequest } from "../../zod/sede.zod";
 import CrearSedeModal from "../../components/sedes/CrearSedeModal";
 import { useCreateSede, useGetSedesByCliente, useGetClientes } from "../../hooks";
 import Loading from "../../components/ui/Loading";

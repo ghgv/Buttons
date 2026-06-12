@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Building2, Hash } from "lucide-react";
 import { useEffect } from "react";
-import { createNivelSchema, type CreateNivelTypeSchema } from "../../schemas/nivel.schema";
+import { createNivelSchema, type CreateNivelTypeSchema } from "../../zod/nivel.zod";
 
 interface CrearNivelModalProps {
   isOpen: boolean;

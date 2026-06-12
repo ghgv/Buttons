@@ -3,7 +3,7 @@ import AlertasPanel from "../../components/dashboard/AlertasPanel";
 
 export default function Alertas() {
   return (
-    <div className="p-4 max-w-7xl mx-auto">
+    <div className=" max-w-7xl mx-auto">
 
       <div className="mb-0">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Alertas</h1>

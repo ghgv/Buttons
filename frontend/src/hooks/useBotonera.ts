@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { botoneraService } from "../services/botonera.service";
-import type { CreateBotoneraRequest } from "../schemas/botonera.schema";
+import type { CreateBotoneraRequest } from "../zod/botonera.zod";
 import type { BotoneraResponse } from "../types/botonera.types";
 
 // Hook para CREAR una botonera

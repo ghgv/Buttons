@@ -1,6 +1,6 @@
 // services/contador.service.ts
 import { api } from "../api/axios.client";
-import type { CreateContadorRequest } from "../schemas/contador.schema";
+import type { CreateContadorRequest } from "../zod/contador.zod";
 import type { ContadorResponse } from "../types/contador.types";
 import axios from "axios";
 

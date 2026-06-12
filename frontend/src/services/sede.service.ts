@@ -1,6 +1,6 @@
 // services/sede.service.ts
 import { api } from "../api/axios.client";
-import type { CreateSedeRequest } from "../schemas/sede.schema";
+import type { CreateSedeRequest } from "../zod/sede.zod";
 import axios from "axios";
 import type { SedeResponse } from "../types/sede.types";
 
