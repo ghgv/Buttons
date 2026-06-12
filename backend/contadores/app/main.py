@@ -15,7 +15,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5175","http://dali.com.co:5174"],  # Cambia esto por el dominio de tu frontend
+    allow_origins=["http://localhost:5175","http://dali.com.co:5174","http://www.dali.com.co:5174"],  # Cambia esto por el dominio de tu frontend
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

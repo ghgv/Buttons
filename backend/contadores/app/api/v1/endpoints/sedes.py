@@ -18,7 +18,7 @@ def crear_sede(
 @router.get("/", status_code=status.HTTP_200_OK)
 def obtener_sedes(
     db: Session = Depends(get_db),
-    # current_user: dict = Depends(get_admin_user) # <- Aquí usamos el candado correcto
+    current_user: dict = Depends(get_admin_user) # <- Aquí usamos el candado correcto
 ):
     return get_sedes(db=db, client_id=current_user["client_id"])
 

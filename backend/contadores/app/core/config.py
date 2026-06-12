@@ -1,16 +1,24 @@
-from dotenv import load_dotenv
 from pathlib import Path
-import os
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-ENV_FILE = BASE_DIR / ".env"
-load_dotenv(ENV_FILE, override=True)
 
+class Settings(BaseSettings):
+    db_host: str = Field(alias="DB_HOST")
+    db_user: str = Field(alias="DB_USER")
+    db_password: str = Field(alias="DB_PASSWORD")
+    db_name: str = Field(alias="DB_NAME")
+    db_port: int = Field(default=3306, alias="DB_PORT")
 
-DB_HOST = os.getenv("HOST")
-DB_USER = os.getenv("USER")
-DB_PASSWORD = os.getenv("PASSWORD")
-DB_NAME = os.getenv("DATABASE")
+    app_host: str = Field(default="0.0.0.0", alias="APP_HOST")
+    app_port: int = Field(default=80, alias="APP_PORT")
+    debug: bool = Field(default=False, alias="DEBUG")
 
-APP_HOST = os.getenv("APP_HOST", "0.0.0.0")
-APP_PORT = int(os.getenv("APP_PORT", 80))
+    model_config = SettingsConfigDict(
+        env_file=BASE_DIR / ".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
+
+settings = Settings()

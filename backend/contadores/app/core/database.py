@@ -1,10 +1,28 @@
-# app/core/database.py
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://jonathan:Nubeware@192.168.2.25/tensorflow"
+from app.core.config import settings
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SQLALCHEMY_DATABASE_URL = (
+    f"mysql+pymysql://"
+    f"{settings.db_user}:"
+    f"{settings.db_password}@"
+    f"{settings.db_host}:"
+    f"{settings.db_port}/"
+    f"{settings.db_name}"
+)
+
+print(SQLALCHEMY_DATABASE_URL)
+
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    pool_pre_ping=True
+)
+
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine
+)
+
 Base = declarative_base()
