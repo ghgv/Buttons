@@ -12,7 +12,6 @@ SQLALCHEMY_DATABASE_URL = (
     f"{settings.db_name}"
 )
 
-print(SQLALCHEMY_DATABASE_URL)
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
