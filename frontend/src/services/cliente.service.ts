@@ -41,21 +41,12 @@ export const clienteService = {
     }
   },
 
-  // ✅ CORREGIDO: Endpoint apuntando correctamente a la colección anidada de sedes
-  getSedesByClientId: async (clientId: string): Promise<SedeResponse[]> => {
-    try {
-      console.log(`🔍 Buscando sedes para el cliente: ${clientId}`);
-      const { data } = await api.get<SedeResponse[]>(`/clients/${clientId}`);
-      console.log("📊 Sedes encontradas:", data);
-      return data;
-    } catch (error) {
-      console.error("❌ Error al obtener sedes del cliente:", error);
-      if (axios.isAxiosError(error) && error.response) {
-        throw new Error(error.response.data?.detail || "Error al obtener las sedes vinculadas");
-      }
-      throw new Error("No se pudo conectar con el servidor");
-    }
-  },
+ // El comentario dice una cosa, pero el código hace otra totalmente diferente
+// ✅ CORREGIDO: Endpoint apuntando correctamente a la colección anidada de sedes
+getSedesByClientId: async (clientId: string): Promise<SedeResponse[]> => {
+  const { data } = await api.get<SedeResponse[]>(`/clients/${clientId}`);
+  return data;
+},
   
   update: async (id: string, data: Partial<CreateClienteRequest>): Promise<ClienteResponse> => {
     try {
