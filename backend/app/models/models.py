@@ -86,8 +86,8 @@ class Bathroom(Base):
 
 class ButtonBox(Base):
     __tablename__ = "button_box_1"
-
-    serie = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
+    serie = Column(Integer, nullable=False, index=True)
     bathroom_id = Column(Integer, ForeignKey("bathrooms.id", ondelete="CASCADE"), nullable=False)
     install_time = Column(DateTime, nullable=False)
 
@@ -97,8 +97,8 @@ class ButtonBox(Base):
 
 class Counter(Base):
     __tablename__ = "counters_1"
-
-    serie = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
+    serie = Column(Integer, nullable=False, index=True)
     bathroom_id = Column(Integer, ForeignKey("bathrooms.id", ondelete="CASCADE"), nullable=False)
     install_time = Column(DateTime, nullable=False)
 
@@ -163,10 +163,12 @@ class CounterLog(Base):
 
     id = Column(Integer, primary_key=True)
     create_time = Column(DateTime, nullable=True)
-    counter_serie = Column(Integer, ForeignKey("counters_1.serie"), index=True, nullable=True)
+    # 1. Cambiado de counter_serie a counter_id, apuntando a counters_1.id
+    counter_id = Column(Integer, ForeignKey("counters_1.id", ondelete="CASCADE"), index=True, nullable=True)
     amount = Column(Integer, nullable=True)
 
     # Relaciones
+    # Asegúrate de que en tu modelo 'Counter', el back_populates apunte a "logs"
     counter = relationship("Counter", back_populates="logs")
 
 
@@ -174,10 +176,12 @@ class ButtonLog(Base):
     __tablename__ = "button_logs"
 
     id = Column(Integer, primary_key=True)
-    button_box_serie = Column(Integer, ForeignKey("button_box_1.serie"), index=True, nullable=False)
+    # 2. Corregido el ForeignKey para que apunte formalmente a button_box_1.id
+    button_box_id = Column(Integer, ForeignKey("button_box_1.id", ondelete="CASCADE"), index=True, nullable=False)
     letter = Column(String(255), nullable=False)
     label = Column(String(255), nullable=False)
     create_time = Column(DateTime, nullable=False)
 
     # Relaciones
+    # Asegúrate de que en tu modelo 'ButtonBox', el back_populates apunte a "logs"
     button_box = relationship("ButtonBox", back_populates="logs")

@@ -2,17 +2,23 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from app.core.database import SessionLocal
 from app.models.models import ButtonLog, ButtonBox, Client, CounterLog, Sede, Level, Bathroom, Counter
-from app.schemas.button_box import button_boxCreate
+from app.schemas.button_box import ButtonBoxCreate
 from sqlalchemy.orm import Session
 from sqlalchemy import select, literal, union_all, desc
+from fastapi import HTTPException, status
 
 def tarea_guardar_botonera(serie: str, letter: str, label: str, valor: int):
     db = SessionLocal()
     try:
         create_time = datetime.now(ZoneInfo("America/Bogota"))
+        dispositivo = db.query(ButtonBox).filter(ButtonBox.serie == int(serie)).first()
+        
+        if not dispositivo:
+            print(f"[Botonera] Error: No existe un dispositivo registrado con la serie {serie}")
+            return
     
         nuevo_log = ButtonLog(
-            button_box_serie=int(serie),
+            button_box_id=dispositivo.id, 
             letter=letter,
             label=label,
             create_time=create_time
@@ -20,7 +26,7 @@ def tarea_guardar_botonera(serie: str, letter: str, label: str, valor: int):
         
         db.add(nuevo_log)
         db.commit()
-        print(f"Registro guardado en 'botonera' | Serie: {serie} | Letra: {letter}")
+        print(f"Registro guardado en 'botonera' | ID Interno: {dispositivo.id} (Serie: {serie}) | Letra: {letter}")
 
     except Exception as e:
         db.rollback()
@@ -29,25 +35,40 @@ def tarea_guardar_botonera(serie: str, letter: str, label: str, valor: int):
     finally:
         db.close()
 
-def crear_botonera(botonera):
-    db = SessionLocal()
-    install_time = datetime.now(ZoneInfo("America/Bogota"))
+def crear_botonera(db: Session, botonera: ButtonBoxCreate):
+    """
+    Registra una nueva botonera validando que la serie no esté duplicada.
+    Usa la sesión inyectada por el endpoint para un manejo limpio de conexiones.
+    """
+    # 1. Validar si la serie ya existe en el sistema (Error 400)
+    serie_existente = db.query(ButtonBox).filter(ButtonBox.serie == botonera.serie).first()
+    if serie_existente:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Error: Ya existe una botonera registrada con la serie {botonera.serie}"
+        )
+        
     try:
+        install_time = datetime.now(ZoneInfo("America/Bogota"))
         nuevo_boton = ButtonBox(
             serie=botonera.serie,
             bathroom_id=botonera.bathroom_id,
             install_time=install_time
         )
+        
         db.add(nuevo_boton)
         db.commit()
         db.refresh(nuevo_boton)
         return nuevo_boton
+        
     except Exception as e:
         db.rollback()
-        print(f"Error al crear botonera: {e}")
-        return None
-    finally:
-        db.close()
+        print(f"Error crítico en base de datos al crear botonera: {e}")
+        # 2. Capturar cualquier fallo inesperado del motor (Error 500)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno al procesar el registro de la botonera en la base de datos"
+        )
 
 def obtener_botoneras_por_bano(db, bathroom_id: int):
     return db.query(ButtonBox).filter(ButtonBox.bathroom_id == bathroom_id).all()
@@ -108,3 +129,77 @@ def get_all_global_logs(db: Session, limit: int = 100, offset: int = 0):
         "historial_eventos": historial
     }
 
+
+
+# nuevas funciones 17/06/2026 
+
+
+def obtener_botonera_por_id_con_logs(db: Session, button_box_id: int, limit: int = 50, offset: int = 0):
+    botonera = db.query(ButtonBox).filter(ButtonBox.id == button_box_id).first()
+    if not botonera:
+        return None
+
+    # Aplicamos la paginación real aquí con .limit() y .offset()
+    logs_recientes = (
+        db.query(ButtonLog)
+        .filter(ButtonLog.button_box_id == button_box_id)
+        .order_by(desc(ButtonLog.create_time))
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
+    
+    return {
+        "id": botonera.id,
+        "serie": botonera.serie,
+        "bathroom_id": botonera.bathroom_id,
+        "install_time": botonera.install_time,
+        "logs": [
+            {
+                "id": log.id,
+                "letter": log.letter,
+                "label": log.label,
+                "create_time": log.create_time
+            } for log in logs_recientes
+        ]
+    }
+
+def editar_botonera(db: Session, button_box_id: int, datos_actualizar: dict):
+    """
+    Recibe un diccionario con los datos a editar (ej: {'bathroom_id': 2})
+    y actualiza la botonera por su ID.
+    """
+    botonera = db.query(ButtonBox).filter(ButtonBox.id == button_box_id).first()
+    if not botonera:
+        return None
+    
+    try:
+        for llave, valor in datos_actualizar.items():
+            if hasattr(botonera, llave):
+                setattr(botonera, llave, valor)
+                
+        db.commit()
+        db.refresh(botonera)
+        return botonera
+    except Exception as e:
+        db.rollback()
+        print(f"Error al editar botonera ID {button_box_id}: {e}")
+        return None
+
+def eliminar_botonera(db: Session, button_box_id: int) -> bool:
+    """
+    Elimina una botonera por su ID. Debido al ON DELETE CASCADE que configuramos
+    en la base de datos y en los modelos, se limpiarán sus logs automáticamente.
+    """
+    botonera = db.query(ButtonBox).filter(ButtonBox.id == button_box_id).first()
+    if not botonera:
+        return False
+    
+    try:
+        db.delete(botonera)
+        db.commit()
+        return True
+    except Exception as e:
+        db.rollback()
+        print(f"Error al eliminar botonera ID {button_box_id}: {e}")
+        return False
