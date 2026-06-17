@@ -18,8 +18,7 @@ export default function AsignarContadorModal({
   isOpen, onClose, onCreate, bathroomId, bathroomName, isPending = false 
 }: AsignarContadorModalProps) {
   
-  console.log("🚀 Modal recibió bathroomId:", bathroomId);
-  console.log("🚀 Modal recibió bathroomName:", bathroomName);
+
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CreateContadorRequest>({
     resolver: zodResolver(createContadorSchema),

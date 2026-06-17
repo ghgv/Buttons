@@ -9,7 +9,6 @@ export const banoService = {
   create: async (data: CreateBanoRequest): Promise<BanoResponse> => {
     try {
       const { data: response } = await api.post<BanoResponse>("/bathrooms", data);
-      console.log("✅ Baño creado:", response);
       return response;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -22,12 +21,9 @@ export const banoService = {
   // ✅ Obtener TODOS los baños por level_id
   getByLevelId: async (levelId: string): Promise<BanoResponse[]> => {
     try {
-      console.log(`🔍 Buscando baños para el nivel: ${levelId}`);
       const { data } = await api.get<BanoResponse[]>(`/bathrooms/${levelId}`);
-      console.log("📊 Baños encontrados:", data);
       return Array.isArray(data) ? data : [];
     } catch (error) {
-      console.error("❌ Error al obtener baños:", error);
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(error.response.data?.detail || "Error al obtener baños");
       }
@@ -52,7 +48,6 @@ export const banoService = {
   update: async (id: string, data: Partial<CreateBanoRequest>): Promise<BanoResponse> => {
     try {
       const { data: response } = await api.put<BanoResponse>(`/bathrooms/${id}`, data);
-      console.log("✏️ Baño actualizado:", response);
       return response;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -66,7 +61,6 @@ export const banoService = {
   delete: async (id: string): Promise<void> => {
     try {
       await api.delete(`/bathrooms/${id}`);
-      console.log("🗑️ Baño eliminado:", id);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(error.response.data?.detail || "Error al eliminar el baño");

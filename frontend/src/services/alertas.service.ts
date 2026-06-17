@@ -25,10 +25,8 @@ export const alertasService = {
   getAlertas: async (limit: number = 100, offset: number = 0): Promise<AlertasResponse> => {
     try {
       const { data } = await api.get<AlertasResponse>(`/botonera/logs?limit=${limit}&offset=${offset}`);
-      console.log("Alertas obtenidas:", data);
       return data;
     } catch (error) {
-      console.error("Error al obtener alertas:", error);
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(error.response.data?.detail || "Error al obtener alertas");
       }

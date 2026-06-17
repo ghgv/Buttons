@@ -35,7 +35,6 @@ export interface DashboardMetricsResponse {
 export const reporteService = {
   getMetricsByClientId: async (clientId: number) => {
     try {
-      console.log(`📊 Obteniendo métricas para cliente: ${clientId}`);
       const { data } = await api.get<DashboardMetricsResponse>(`/metrics/client/${clientId}`);
       
       // Aplanar los eventos y agregar la propiedad 'sede'
@@ -46,8 +45,7 @@ export const reporteService = {
         }))
       );
       
-      console.log("✅ Eventos aplanados:", eventos.length);
-      console.log("📋 Sedes disponibles:", data.sedes_info.map(s => s.name));
+     
       
       return {
         client_id: data.client_id,
@@ -57,7 +55,6 @@ export const reporteService = {
         eventos: eventos
       };
     } catch (error) {
-      console.error("❌ Error al obtener métricas:", error);
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(error.response.data?.detail || "Error al obtener métricas");
       }

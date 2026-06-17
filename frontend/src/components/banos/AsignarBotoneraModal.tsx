@@ -18,11 +18,7 @@ export default function AsignarBotoneraModal({
   isOpen, onClose, onCreate, bathroomId, bathroomName, isPending = false 
 }: AsignarBotoneraModalProps) {
 
-  console.log("🟣 AsignarBotoneraModal - MODAL RENDERIZADO");
-  console.log("🟣 bathroomId recibido:", bathroomId);
-  console.log("🟣 bathroomName recibido:", bathroomName);
-  console.log("🟣 isPending:", isPending);
-  console.log("🟣 isOpen:", isOpen);
+
 
   const { 
     register, 
@@ -41,32 +37,23 @@ export default function AsignarBotoneraModal({
   // Actualizar el formulario cuando cambia bathroomId
   useEffect(() => {
     if (bathroomId) {
-      console.log("🔄 useEffect - Actualizando bathroom_id en el formulario:", bathroomId);
       setValue("bathroom_id", bathroomId);
     }
   }, [bathroomId, setValue]);
 
   const onSubmit = (data: CreateBotoneraRequest) => {
-    console.log("🎯 SUBMIT EJECUTADO");
-    console.log("📝 Datos del formulario:", data);
-    console.log("📝 serie:", data.serie);
-    console.log("📝 bathroom_id:", data.bathroom_id);
-    console.log("📝 Tipo de bathroom_id:", typeof data.bathroom_id);
+   
     
     // Verificar si los datos son válidos
     if (!data.serie) {
-      console.error("❌ Error: La serie está vacía");
       return;
     }
     
     if (!data.bathroom_id) {
-      console.error("❌ Error: bathroom_id está vacío");
       return;
     }
     
-    console.log("✅ Datos válidos, llamando a onCreate");
     onCreate(data);
-    console.log("✅ onCreate llamado, reseteando formulario y cerrando modal");
     reset();
     onClose();
   };
@@ -76,7 +63,6 @@ export default function AsignarBotoneraModal({
   };
 
   const handleClose = () => {
-    console.log("❌ Cerrando modal manualmente");
     reset();
     onClose();
   };
@@ -84,11 +70,9 @@ export default function AsignarBotoneraModal({
   
 
   if (!isOpen) {
-    console.log("🚪 Modal cerrado, no renderizando contenido");
     return null;
   }
 
-  console.log("✅ Modal abierto, renderizando formulario");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -133,7 +117,7 @@ export default function AsignarBotoneraModal({
                 placeholder="Ej: BTN-001" 
                 className={`w-full pl-10 pr-3 py-2 border rounded-xl ${errors.serie ? "border-red-500" : "border-gray-200"}`} 
                 {...register("serie")}
-                onChange={(e) => console.log("📝 Serie cambiada:", e.target.value)}
+                onChange={(e) => (e.target.value)}
               />
             </div>
             {errors.serie && <p className="text-red-500 text-xs mt-1">{errors.serie.message}</p>}

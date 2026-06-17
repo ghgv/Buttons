@@ -6,12 +6,9 @@ import axios from "axios";
 export const dashboardService = {
   getMetricsByClientId: async (clientId: number): Promise<DashboardMetricsResponse> => {
     try {
-      console.log(`📊 Obteniendo métricas para cliente: ${clientId}`);
       const { data } = await api.get<DashboardMetricsResponse>(`/metrics/client/${clientId}`);
-      console.log("✅ Métricas obtenidas:", data);
       return data;
     } catch (error) {
-      console.error("❌ Error al obtener métricas:", error);
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(error.response.data?.detail || "Error al obtener métricas");
       }
