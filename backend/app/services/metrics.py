@@ -1,6 +1,6 @@
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from sqlalchemy import text # <-- Importación necesaria para el query crudo
 from app.models.models import Client, Sede, Level, Bathroom
 
 def metrics_by_id_client(db: Session, client_id: int):
@@ -17,7 +17,7 @@ def metrics_by_id_client(db: Session, client_id: int):
     # 3. Obtenemos TODAS las sedes y las preparamos con un array vacío
     sedes_db = db.query(Sede).filter(Sede.client_id == client_id).all()
     
-    # Usamos un diccionario agrupado por el nombre de la sede para una búsqueda rápida (O(1))
+    # Comprensión de diccionario corregida (la llave se cierra al puro final del 'for')
     sedes_agrupadas = {
         sede.name: {
             "id": sede.id,
@@ -26,10 +26,10 @@ def metrics_by_id_client(db: Session, client_id: int):
         }
         for sede in sedes_db
     }
-
-    # 4. Ejecutamos el query analítico
+    # 4. Ejecutamos el query analítico corregido (Esquema por ID y resistente a nulos)
     query = text("""
         SELECT * FROM (
+            -- 1. MÓDULO DE CONTADORES (INGRESOS)
             SELECT 
                 cl.create_time AS fecha_hora,
                 s.name AS sede,
@@ -39,16 +39,17 @@ def metrics_by_id_client(db: Session, client_id: int):
                 'ingreso' AS tipo_evento,
                 'flujo de personas' AS detalle_evento,
                 cl.amount AS valor
-            FROM clients c
-            JOIN sedes s ON c.id = s.client_id
-            JOIN levels l ON s.id = l.sede_id
-            JOIN bathrooms b ON l.id = b.level_id
-            JOIN counters_1 c1 ON b.id = c1.bathroom_id
-            JOIN counter_logs cl ON c1.serie = cl.counter_serie
+            FROM counter_logs cl
+            LEFT JOIN counters_1 c1 ON cl.counter_id = c1.id
+            LEFT JOIN bathrooms b ON c1.bathroom_id = b.id
+            LEFT JOIN levels l ON b.level_id = l.id
+            LEFT JOIN sedes s ON l.sede_id = s.id
+            LEFT JOIN clients c ON s.client_id = c.id
             WHERE c.id = :client_id
 
             UNION ALL
 
+            -- 2. MÓDULO DE BOTONERAS (ALERTAS)
             SELECT 
                 bl.create_time AS fecha_hora,
                 s.name AS sede,
@@ -58,12 +59,12 @@ def metrics_by_id_client(db: Session, client_id: int):
                 'alerta' AS tipo_evento,
                 bl.label AS detalle_evento,
                 1 AS valor
-            FROM clients c
-            JOIN sedes s ON c.id = s.client_id
-            JOIN levels l ON s.id = l.sede_id
-            JOIN bathrooms b ON l.id = b.level_id
-            JOIN button_box_1 bb ON b.id = bb.bathroom_id
-            JOIN button_logs bl ON bb.serie = bl.button_box_serie
+            FROM button_logs bl
+            LEFT JOIN button_box_1 bb ON bl.button_box_id = bb.id
+            LEFT JOIN bathrooms b ON bb.bathroom_id = b.id
+            LEFT JOIN levels l ON b.level_id = l.id
+            LEFT JOIN sedes s ON l.sede_id = s.id
+            LEFT JOIN clients c ON s.client_id = c.id
             WHERE c.id = :client_id
         ) AS metricas_completas
         ORDER BY fecha_hora DESC;
@@ -73,10 +74,24 @@ def metrics_by_id_client(db: Session, client_id: int):
     
     # 5. Distribuimos los eventos en sus respectivas sedes
     for evento in eventos_crudos:
-        nombre_sede = evento["sede"]
-        if nombre_sede in sedes_agrupadas:
-            # Convertimos el RowMapping a dict normal y lo agregamos al array
-            sedes_agrupadas[nombre_sede]["eventos"].append(dict(evento))
+        # Si el dispositivo fue borrado, la sede vendrá como None en el LEFT JOIN.
+        # Lo manejamos asignándolo a una sede genérica o controlando que no rompa el diccionario.
+        nombre_sede = evento["sede"] if evento["sede"] is not None else "Dispositivos Desvinculados"
+        
+        # Si por alguna razón la clave no existe en el diccionario (ej: dispositivos huérfanos), la creamos dinámicamente
+        if nombre_sede not in sedes_agrupadas:
+            sedes_agrupadas[nombre_sede] = {
+                "id": None,
+                "name": nombre_sede,
+                "eventos": []
+            }
+            
+        evento_dict = dict(evento)
+        # Limpieza visual para el JSON del frontend
+        if evento_dict["dispositivo_serie"] is None:
+            evento_dict["dispositivo_serie"] = "Dispositivo Eliminado"
+            
+        sedes_agrupadas[nombre_sede]["eventos"].append(evento_dict)
 
     # 6. Retornamos el JSON estructurado
     return {
@@ -87,6 +102,5 @@ def metrics_by_id_client(db: Session, client_id: int):
             "total_bathrooms": total_bathrooms
         },
         "total_eventos": len(eventos_crudos),
-        # Convertimos el diccionario nuevamente a una lista para el frontend
         "sedes_info": list(sedes_agrupadas.values()) 
     }

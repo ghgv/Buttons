@@ -73,11 +73,14 @@ def crear_botonera(db: Session, botonera: ButtonBoxCreate):
 def obtener_botoneras_por_bano(db, bathroom_id: int):
     return db.query(ButtonBox).filter(ButtonBox.bathroom_id == bathroom_id).all()
 
-def get_all_global_logs(db: Session, limit: int = 100, offset: int = 0):
+def get_logs_by_client(db: Session, client_id: int):
+    """
+    Obtiene el historial unificado filtrado estrictamente por un ID de cliente,
+    utilizando el nuevo esquema relacional basado en IDs y LEFT JOINs.
+    """
     
-    # 1. Query para los logs de los contadores (Ingresos)
+    # 1. Query para los logs de los contadores (Ingresos) del cliente
     query_counters = select(
-        Client.name.label("cliente"),
         CounterLog.create_time.label("fecha_hora"),
         Sede.name.label("sede"),
         Level.name.label("nivel"),
@@ -86,16 +89,16 @@ def get_all_global_logs(db: Session, limit: int = 100, offset: int = 0):
         literal("ingreso").label("tipo_evento"),
         literal("flujo de personas").label("detalle_evento"),
         CounterLog.amount.label("valor")
-    ).select_from(Client)\
-     .join(Sede, Client.id == Sede.client_id)\
-     .join(Level, Sede.id == Level.sede_id)\
-     .join(Bathroom, Level.id == Bathroom.level_id)\
-     .join(Counter, Bathroom.id == Counter.bathroom_id)\
-     .join(CounterLog, Counter.serie == CounterLog.counter_serie)
+    ).select_from(CounterLog)\
+     .join(Counter, CounterLog.counter_id == Counter.id)\
+     .join(Bathroom, Counter.bathroom_id == Bathroom.id)\
+     .join(Level, Bathroom.level_id == Level.id)\
+     .join(Sede, Level.sede_id == Sede.id)\
+     .join(Client, Sede.client_id == Client.id)\
+     .where(Client.id == client_id) # <-- Filtro de cliente corregido
 
-    # 2. Query para los logs de las botoneras (Alertas)
+    # 2. Query para los logs de las botoneras (Alertas) del cliente
     query_buttons = select(
-        Client.name.label("cliente"),
         ButtonLog.create_time.label("fecha_hora"),
         Sede.name.label("sede"),
         Level.name.label("nivel"),
@@ -104,31 +107,21 @@ def get_all_global_logs(db: Session, limit: int = 100, offset: int = 0):
         literal("alerta").label("tipo_evento"),
         ButtonLog.label.label("detalle_evento"),
         literal(1).label("valor")
-    ).select_from(Client)\
-     .join(Sede, Client.id == Sede.client_id)\
-     .join(Level, Sede.id == Level.sede_id)\
-     .join(Bathroom, Level.id == Bathroom.level_id)\
-     .join(ButtonBox, Bathroom.id == ButtonBox.bathroom_id)\
-     .join(ButtonLog, ButtonBox.serie == ButtonLog.button_box_serie)
+    ).select_from(ButtonLog)\
+     .join(ButtonBox, ButtonLog.button_box_id == ButtonBox.id)\
+     .join(Bathroom, ButtonBox.bathroom_id == Bathroom.id)\
+     .join(Level, Bathroom.level_id == Level.id)\
+     .join(Sede, Level.sede_id == Sede.id)\
+     .join(Client, Sede.client_id == Client.id)\
+     .where(Client.id == client_id) # <-- Filtro de cliente corregido
 
-    # 3. Unimos ambas consultas usando UNION ALL y le damos un alias
-    unified_query = union_all(query_counters, query_buttons).alias("logs_completos")
-
-    stmt = select(unified_query)\
-        .order_by(desc(unified_query.c.fecha_hora))\
-        .limit(limit)\
-        .offset(offset)
-
+    # 3. Unir consultas y ordenar
+    unified_query = union_all(query_counters, query_buttons).alias("metricas_completas")
+    
+    stmt = select(unified_query).order_by(desc(unified_query.c.fecha_hora))
+    
     logs_crudos = db.execute(stmt).mappings().all()
-    historial = [dict(log) for log in logs_crudos]
-
-    return {
-        "registros_devueltos": len(historial),
-        "limit": limit,
-        "offset": offset,
-        "historial_eventos": historial
-    }
-
+    return [dict(log) for log in logs_crudos]
 
 
 # nuevas funciones 17/06/2026 
@@ -166,12 +159,29 @@ def obtener_botonera_por_id_con_logs(db: Session, button_box_id: int, limit: int
 
 def editar_botonera(db: Session, button_box_id: int, datos_actualizar: dict):
     """
-    Recibe un diccionario con los datos a editar (ej: {'bathroom_id': 2})
-    y actualiza la botonera por su ID.
+    Modifica los parámetros de una botonera por su ID primario.
+    Valida que la nueva serie no esté ocupada por otro dispositivo.
     """
+    
     botonera = db.query(ButtonBox).filter(ButtonBox.id == button_box_id).first()
     if not botonera:
-        return None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No se pudo actualizar: La botonera con ID {button_box_id} no existe."
+        )
+    
+    nueva_serie = datos_actualizar.get("serie")
+    if nueva_serie is not None:
+        serie_duplicada = (
+            db.query(ButtonBox)
+            .filter(ButtonBox.serie == nueva_serie, ButtonBox.id != button_box_id)
+            .first()
+        )
+        if serie_duplicada:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Error: Ya existe otra botonera registrada con la serie {nueva_serie}."
+            )
     
     try:
         for llave, valor in datos_actualizar.items():
@@ -181,25 +191,42 @@ def editar_botonera(db: Session, button_box_id: int, datos_actualizar: dict):
         db.commit()
         db.refresh(botonera)
         return botonera
+        
     except Exception as e:
         db.rollback()
-        print(f"Error al editar botonera ID {button_box_id}: {e}")
-        return None
+        print(f"Error crítico al editar botonera ID {button_box_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno al procesar la actualización en la base de datos."
+        )
+    
 
-def eliminar_botonera(db: Session, button_box_id: int) -> bool:
+def eliminar_botonera(db: Session, button_box_id: int):
     """
-    Elimina una botonera por su ID. Debido al ON DELETE CASCADE que configuramos
-    en la base de datos y en los modelos, se limpiarán sus logs automáticamente.
+    Elimina una botonera conservando sus logs históricos intactos (poniendo su FK en NULL).
     """
     botonera = db.query(ButtonBox).filter(ButtonBox.id == button_box_id).first()
     if not botonera:
-        return False
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No se pudo eliminar: La botonera con ID {button_box_id} no existe."
+        )
     
     try:
+        db.query(ButtonLog).filter(ButtonLog.button_box_id == button_box_id).update(
+            {"button_box_id": None}, 
+            synchronize_session=False
+        )
+        
+        
         db.delete(botonera)
         db.commit()
         return True
+        
     except Exception as e:
         db.rollback()
-        print(f"Error al eliminar botonera ID {button_box_id}: {e}")
-        return False
+        print(f"Error crítico al eliminar la botonera ID {button_box_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno al intentar eliminar la botonera en la base de datos."
+        )

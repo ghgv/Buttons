@@ -70,7 +70,9 @@ def modificar_contador(counter_id: int, datos: CounterUpdate, db: Session = Depe
 
 @router.delete("/{counter_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remover_contador(counter_id: int, db: Session = Depends(get_db)):
-    eliminado = task_counters.eliminar_contador(db, counter_id)
-    if not eliminado:
-        raise HTTPException(status_code=404, detail="El contador no existe o no se pudo eliminar")
+    """
+    Elimina un contador del sistema por su ID primario.
+    Los logs de ingresos asociados se mantendrán almacenados con su identificador en NULL.
+    """
+    task_counters.eliminar_contador(db, counter_id)
     return None

@@ -125,20 +125,31 @@ def editar_contador(db: Session, counter_id: int, datos_actualizar: dict):
         print(f"Error al editar el contador ID {counter_id}: {e}")
         return None
 
-def eliminar_contador(db: Session, counter_id: int) -> bool:
+def eliminar_contador(db: Session, counter_id: int):
     """
-    Elimina el registro de un contador por su ID. La base de datos
-    se encargará de limpiar sus logs en cascada de forma automática.
+    Elimina un contador por su ID conservando sus logs de ingresos intactos (poniendo su FK en NULL).
     """
     contador = db.query(Counter).filter(Counter.id == counter_id).first()
     if not contador:
-        return False
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No se pudo eliminar: El contador con ID {counter_id} no existe."
+        )
     
     try:
+        db.query(CounterLog).filter(CounterLog.counter_id == counter_id).update(
+            {"counter_id": None},
+            synchronize_session=False
+        )
+        
         db.delete(contador)
         db.commit()
         return True
+        
     except Exception as e:
         db.rollback()
-        print(f"Error al eliminar el contador ID {counter_id}: {e}")
-        return False
+        print(f"Error crítico al eliminar el contador ID {counter_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno al intentar eliminar el contador en la base de datos."
+        )

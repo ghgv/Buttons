@@ -76,37 +76,26 @@ def obtener_botonera_con_historial(
     limit: int = Query(default=50, ge=1, le=100, description="Número de registros por página"),
     offset: int = Query(default=0, ge=0, description="Número de registros a omitir")
 ):
-    # Pasamos el límite y offset al servicio para que realice la paginación
     res = task_button_box.obtener_botonera_por_id_con_logs(db, button_box_id, limit=limit, offset=offset)
     if not res:
         raise HTTPException(status_code=404, detail="Botonera no encontrada")
     return res
 
 @router.put("/{button_box_id}", response_model=ButtonBoxResponse)
-def modificar_botonera(button_box_id: int, datos: ButtonBoxUpdate, db: Session = Depends(get_db)):
-    # Convertimos el esquema Pydantic a un diccionario, ignorando los campos que vengan vacíos (None)
+def modificar_botonera(
+    button_box_id: int, 
+    datos: ButtonBoxUpdate, 
+    db: Session = Depends(get_db)
+):
     update_data = datos.model_dump(exclude_unset=True)
-    
     actualizada = task_button_box.editar_botonera(db, button_box_id, update_data)
-    if not actualizada:
-        raise HTTPException(status_code=404, detail="No se pudo actualizar o la botonera no existe")
     return actualizada
 
 @router.delete("/{button_box_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remover_botonera(button_box_id: int, db: Session = Depends(get_db)):
     """
     Elimina una botonera del sistema por su ID primario.
-    Nota: Al eliminarla, MySQL limpiará automáticamente todos sus logs relacionados 
-    gracias al ON DELETE CASCADE.
+    Los logs asociados se conservarán en la base de datos con su identificador en NULL.
     """
-    eliminado = task_button_box.eliminar_botonera(db, button_box_id)
-    
-    if not eliminado:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail=f"No se pudo eliminar: La botonera con ID {button_box_id} no existe."
-        )
-        
-    # Al usar status_code 204, FastAPI sabe que no debe retornar ningún JSON, 
-    # simplemente envía las cabeceras de éxito al cliente.
+    task_button_box.eliminar_botonera(db, button_box_id)
     return None
