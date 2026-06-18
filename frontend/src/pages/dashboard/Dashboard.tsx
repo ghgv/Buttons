@@ -13,18 +13,48 @@ import AlertasPorSedeChart from "./charts/AlertasPorSedeChart";
 import EventosDiariosChart from "./charts/EventosDiariosChart";
 import AlertasPorDiaChart from "./charts/AlertasPorDiaChart";
 import UsoGeneroChart from "./charts/UsoGeneroChart";
+import Loading from "../../components/ui/Loading";
+
+// Clave para localStorage
+const STORAGE_KEY = "dashboard_selected_client";
 
 export default function Dashboard() {
-  const [selectedClientId, setSelectedClientId] = useState<string>("");
+  // ✅ Inicializar desde localStorage
+  const [selectedClientId, setSelectedClientId] = useState<string>(() => {
+    return localStorage.getItem(STORAGE_KEY) || "";
+  });
+  
   const [selectedSedes, setSelectedSedes] = useState<string[]>([]);
   const [fechaInicio, setFechaInicio] = useState<string>("");
   const [fechaFin, setFechaFin] = useState<string>("");
   const [filtrosModalOpen, setFiltrosModalOpen] = useState(false);
 
   const { data: clientes = [], isLoading: isLoadingClientes } = useGetClientes();
-  const { data: metrics, isLoading, error, refetch } = useGetDashboardMetrics(
-    selectedClientId ? parseInt(selectedClientId) : null
+  
+  // ✅ Obtener métricas con opciones para mantener datos en caché
+  const { 
+    data: metrics, 
+    isLoading, 
+    isFetching,
+    error, 
+    refetch,
+    isError 
+  } = useGetDashboardMetrics(
+    selectedClientId ? parseInt(selectedClientId) : null,
+    {
+      placeholderData: (previousData) => previousData, // ✅ Mantener datos anteriores
+      retry: false,
+    }
   );
+
+  // ✅ Guardar cliente seleccionado en localStorage
+  useEffect(() => {
+    if (selectedClientId) {
+      localStorage.setItem(STORAGE_KEY, selectedClientId);
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }, [selectedClientId]);
 
   // Obtener lista de todas las sedes
   const sedesList = useMemo(() => {
@@ -37,7 +67,7 @@ export default function Dashboard() {
     if (sedesList.length > 0 && selectedSedes.length === 0) {
       setSelectedSedes([...sedesList]);
     }
-  }, [sedesList]);
+  }, [sedesList, selectedSedes.length]);
 
   // Obtener todos los eventos
   const allEventos = useMemo(() => {
@@ -68,7 +98,8 @@ export default function Dashboard() {
 
   // Handlers
   const handleClientChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedClientId(e.target.value);
+    const newClientId = e.target.value;
+    setSelectedClientId(newClientId);
     setSelectedSedes([]);
     setFechaInicio("");
     setFechaFin("");
@@ -84,6 +115,13 @@ export default function Dashboard() {
     setSelectedSedes([...sedesList]);
     setFechaInicio("");
     setFechaFin("");
+  };
+
+  // ✅ Handler para recargar manualmente
+  const handleRefresh = () => {
+    if (selectedClientId) {
+      refetch();
+    }
   };
 
   // Calcular estadísticas filtradas
@@ -137,7 +175,7 @@ export default function Dashboard() {
       });
   };
 
-  // ✅ Nueva función para procesar alertas por día
+  // Función para procesar alertas por día
   const getAlertasPorDia = () => {
     if (!filteredEventos.length) return [];
 
@@ -356,58 +394,38 @@ export default function Dashboard() {
     });
   };
 
-  // Datos procesados
-  const eventosPorDia = getEventsByDay();
-  const alertasPorDia = getAlertasPorDia(); // ✅ Nuevo dato
-  const usoPorGenero = getUsoByGenero();
-  const flujoPersonas = getFlujoPersonas();
-  const sedesOBanosAlertasData = getSedesOBanosAlertasData();
-  const { totalIngresos, totalAlertas } = getFilteredStats();
+  // ✅ Verificar si tenemos datos en caché
+  const hasCachedData = Boolean(metrics);
+  const showLoading = isLoading && !hasCachedData;
 
-  const selectedCliente = clientes.find(c => c.id === selectedClientId);
-  
-  const hasActiveFilters = Boolean(
-    (selectedSedes.length > 0 && selectedSedes.length < sedesList.length) || 
-    fechaInicio || 
-    fechaFin
-  );
-
-  const getSedesText = () => {
-    if (selectedSedes.length === 0) return 'Ninguna sede';
-    if (selectedSedes.length === sedesList.length) return 'Todas las sedes';
-    if (selectedSedes.length === 1) return selectedSedes[0];
-    return `${selectedSedes.length} sedes seleccionadas`;
-  };
-
-  // Renderizado condicional inicial
+  // Renderizado condicional inicial - SOLO para carga inicial sin datos
   if (isLoadingClientes) {
-    return (
-      <div className="p-4 max-w-7xl mx-auto">
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto"></div>
-            <p className="mt-4 text-gray-500">Cargando clientes...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <Loading text="Cargando clientes"/>
   }
 
-  // Estado sin cliente seleccionado
+  // ✅ Estado sin cliente seleccionado PERO con datos en caché
   if (!selectedClientId) {
+    if (hasCachedData) {
+      // Mostrar dashboard normal con los datos en caché
+      return renderDashboard();
+    }
+    
+    // No hay datos, mostrar mensaje para seleccionar cliente
     return (
       <div className="p-4 max-w-7xl mx-auto space-y-6">
         <DashboardHeader
           selectedClientId={selectedClientId}
           clientes={clientes}
-          selectedCliente={selectedCliente}
+          selectedCliente={null}
           selectedSedes={selectedSedes}
           fechaInicio={fechaInicio}
           fechaFin={fechaFin}
-          hasActiveFilters={hasActiveFilters}
+          hasActiveFilters={false}
           onClientChange={handleClientChange}
           onFilterToggle={() => setFiltrosModalOpen(!filtrosModalOpen)}
           isLoadingClientes={isLoadingClientes}
+          onRefresh={handleRefresh}
+          isRefreshing={isFetching}
         />
         
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
@@ -419,36 +437,109 @@ export default function Dashboard() {
     );
   }
 
-  // Estado de carga
-  if (isLoading) {
-    return (
-      <div className="p-4 max-w-7xl mx-auto space-y-6">
-        <DashboardHeader
-          selectedClientId={selectedClientId}
-          clientes={clientes}
-          selectedCliente={selectedCliente}
-          selectedSedes={selectedSedes}
-          fechaInicio={fechaInicio}
-          fechaFin={fechaFin}
-          hasActiveFilters={hasActiveFilters}
-          onClientChange={handleClientChange}
-          onFilterToggle={() => setFiltrosModalOpen(!filtrosModalOpen)}
-          isLoadingClientes={isLoadingClientes}
-        />
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto"></div>
-            <p className="mt-4 text-gray-500">Cargando métricas...</p>
+  // Siempre renderizar el dashboard
+  return renderDashboard();
+
+  // ✅ Función para renderizar el dashboard completo
+  function renderDashboard() {
+    // Datos procesados
+    const eventosPorDia = getEventsByDay();
+    const alertasPorDia = getAlertasPorDia();
+    const usoPorGenero = getUsoByGenero();
+    const flujoPersonas = getFlujoPersonas();
+    const sedesOBanosAlertasData = getSedesOBanosAlertasData();
+    const { totalIngresos, totalAlertas } = getFilteredStats();
+
+    const selectedCliente = clientes.find(c => c.id === selectedClientId);
+    
+    const hasActiveFilters = Boolean(
+      (selectedSedes.length > 0 && selectedSedes.length < sedesList.length) || 
+      fechaInicio || 
+      fechaFin
+    );
+
+    const getSedesText = () => {
+      if (selectedSedes.length === 0) return 'Ninguna sede';
+      if (selectedSedes.length === sedesList.length) return 'Todas las sedes';
+      if (selectedSedes.length === 1) return selectedSedes[0];
+      return `${selectedSedes.length} sedes seleccionadas`;
+    };
+
+    // ✅ Si hay error y no hay datos en caché, mostrar error
+    if (isError && !hasCachedData) {
+      return (
+        <div className="p-4 max-w-7xl mx-auto space-y-6">
+          <DashboardHeader
+            selectedClientId={selectedClientId}
+            clientes={clientes}
+            selectedCliente={selectedCliente}
+            selectedSedes={selectedSedes}
+            fechaInicio={fechaInicio}
+            fechaFin={fechaFin}
+            hasActiveFilters={hasActiveFilters}
+            onClientChange={handleClientChange}
+            onFilterToggle={() => setFiltrosModalOpen(!filtrosModalOpen)}
+            isLoadingClientes={isLoadingClientes}
+            onRefresh={handleRefresh}
+            isRefreshing={isFetching}
+          />
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+            <AlertTriangle size={48} className="mx-auto text-red-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Error al cargar datos</h3>
+            <p className="text-gray-500 mb-4">{error?.message || "Error desconocido"}</p>
+            <button 
+              onClick={handleRefresh} 
+              className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+            >
+              <RefreshCw size={16} className={isFetching ? "animate-spin" : ""} /> 
+              {isFetching ? "Cargando..." : "Reintentar"}
+            </button>
           </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  // Estado de error
-  if (error) {
+    // ✅ Si está cargando y no hay datos, mostrar loading
+    if (showLoading) {
+      return (
+        <div className="p-4 max-w-7xl mx-auto space-y-6">
+          <DashboardHeader
+            selectedClientId={selectedClientId}
+            clientes={clientes}
+            selectedCliente={selectedCliente}
+            selectedSedes={selectedSedes}
+            fechaInicio={fechaInicio}
+            fechaFin={fechaFin}
+            hasActiveFilters={hasActiveFilters}
+            onClientChange={handleClientChange}
+            onFilterToggle={() => setFiltrosModalOpen(!filtrosModalOpen)}
+            isLoadingClientes={isLoadingClientes}
+            onRefresh={handleRefresh}
+            isRefreshing={isFetching}
+          />
+          <div className="flex items-center justify-center h-96">
+            <div className="text-center">
+              <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto"></div>
+              <p className="mt-4 text-gray-500">Cargando métricas...</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ✅ Renderizado completo del dashboard con overlay de carga
     return (
-      <div className="p-4 max-w-7xl mx-auto space-y-6">
+      <div className="p-4 max-w-7xl mx-auto space-y-6 relative">
+        {/* Overlay de carga cuando está refrescando */}
+        {isFetching && !showLoading && (
+          <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center rounded-2xl">
+            <div className="bg-white p-6 rounded-xl shadow-lg flex items-center gap-3">
+              <div className="w-6 h-6 border-3 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+              <span className="text-sm font-medium text-gray-700">Actualizando datos...</span>
+            </div>
+          </div>
+        )}
+
         <DashboardHeader
           selectedClientId={selectedClientId}
           clientes={clientes}
@@ -460,91 +551,62 @@ export default function Dashboard() {
           onClientChange={handleClientChange}
           onFilterToggle={() => setFiltrosModalOpen(!filtrosModalOpen)}
           isLoadingClientes={isLoadingClientes}
+          onRefresh={handleRefresh}
+          isRefreshing={isFetching}
         />
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
-          <AlertTriangle size={48} className="mx-auto text-red-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Error al cargar datos</h3>
-          <p className="text-gray-500 mb-4">{error.message}</p>
-          <button 
-            onClick={() => refetch()} 
-            className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-          >
-            <RefreshCw size={16} /> Reintentar
-          </button>
+
+        <DashboardFilters
+          isOpen={filtrosModalOpen}
+          selectedSedes={selectedSedes}
+          fechaInicio={fechaInicio}
+          fechaFin={fechaFin}
+          sedesList={sedesList}
+          onClose={() => setFiltrosModalOpen(false)}
+          onSedesChange={setSelectedSedes}
+          onFechaInicioChange={setFechaInicio}
+          onFechaFinChange={setFechaFin}
+          onReset={handleResetFilters}
+          onApply={handleFilterApply}
+        />
+
+        <DashboardStats
+          totalSedes={selectedSedes.length > 0 ? selectedSedes.length : metrics?.resumen_infraestructura?.total_sedes || 0}
+          totalNiveles={metrics?.resumen_infraestructura?.total_levels || 0}
+          totalBanios={metrics?.resumen_infraestructura?.total_bathrooms || 0}
+          totalIngresos={totalIngresos}
+          totalAlertas={totalAlertas}
+          selectedSedes={selectedSedes}
+          sedesText={getSedesText()}
+        />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <FlujoPersonasChart
+            data={flujoPersonas}
+            selectedSedes={selectedSedes}
+            fechaInicio={fechaInicio}
+            fechaFin={fechaFin}
+          />
+
+          <AlertasPorSedeChart
+            data={sedesOBanosAlertasData}
+            selectedSedes={selectedSedes}
+          />
+
+          <EventosDiariosChart
+            data={eventosPorDia}
+            selectedSedes={selectedSedes}
+          />
+
+          <UsoGeneroChart data={usoPorGenero} />
         </div>
-      </div>
-    );
-  }
 
-  // Renderizado completo
-  return (
-    <div className="p-4 max-w-7xl mx-auto space-y-6">
-      <DashboardHeader
-        selectedClientId={selectedClientId}
-        clientes={clientes}
-        selectedCliente={selectedCliente}
-        selectedSedes={selectedSedes}
-        fechaInicio={fechaInicio}
-        fechaFin={fechaFin}
-        hasActiveFilters={hasActiveFilters}
-        onClientChange={handleClientChange}
-        onFilterToggle={() => setFiltrosModalOpen(!filtrosModalOpen)}
-        isLoadingClientes={isLoadingClientes}
-      />
-
-      <DashboardFilters
-        isOpen={filtrosModalOpen}
-        selectedSedes={selectedSedes}
-        fechaInicio={fechaInicio}
-        fechaFin={fechaFin}
-        sedesList={sedesList}
-        onClose={() => setFiltrosModalOpen(false)}
-        onSedesChange={setSelectedSedes}
-        onFechaInicioChange={setFechaInicio}
-        onFechaFinChange={setFechaFin}
-        onReset={handleResetFilters}
-        onApply={handleFilterApply}
-      />
-
-      <DashboardStats
-        totalSedes={selectedSedes.length > 0 ? selectedSedes.length : metrics?.resumen_infraestructura?.total_sedes || 0}
-        totalNiveles={metrics?.resumen_infraestructura?.total_levels || 0}
-        totalBanios={metrics?.resumen_infraestructura?.total_bathrooms || 0}
-        totalIngresos={totalIngresos}
-        totalAlertas={totalAlertas}
-        selectedSedes={selectedSedes}
-        sedesText={getSedesText()}
-      />
-
-      {/* ✅ Grid de 2 columnas para las primeras 4 gráficas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <FlujoPersonasChart
-          data={flujoPersonas}
+        <AlertasPorDiaChart
+          data={alertasPorDia}
           selectedSedes={selectedSedes}
           fechaInicio={fechaInicio}
           fechaFin={fechaFin}
         />
-
-        <AlertasPorSedeChart
-          data={sedesOBanosAlertasData}
-          selectedSedes={selectedSedes}
-        />
-
-        <EventosDiariosChart
-          data={eventosPorDia}
-          selectedSedes={selectedSedes}
-        />
-
-        <UsoGeneroChart data={usoPorGenero} />
       </div>
-
-      {/* ✅ Nueva gráfica de Alertas por Día - Ocupa todo el ancho */}
-      <AlertasPorDiaChart
-        data={alertasPorDia}
-        selectedSedes={selectedSedes}
-        fechaInicio={fechaInicio}
-        fechaFin={fechaFin}
-      />
-    </div>
-  );
+    );
+  }
 }

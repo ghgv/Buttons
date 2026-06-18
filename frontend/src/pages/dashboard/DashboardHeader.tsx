@@ -1,17 +1,19 @@
 // components/dashboard/DashboardHeader.tsx
-import { ChevronDown, Filter } from "lucide-react";
+import { ChevronDown, Filter, RefreshCw } from "lucide-react";
 
 interface DashboardHeaderProps {
   selectedClientId: string;
   clientes: any[];
   selectedCliente: any;
-  selectedSedes: string[]; // ✅ Cambiado a array
+  selectedSedes: string[];
   fechaInicio: string;
   fechaFin: string;
   hasActiveFilters: boolean;
   onClientChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   onFilterToggle: () => void;
   isLoadingClientes: boolean;
+  onRefresh?: () => void; // ✅ Nuevo prop
+  isRefreshing?: boolean; // ✅ Nuevo prop
 }
 
 export default function DashboardHeader({
@@ -25,6 +27,8 @@ export default function DashboardHeader({
   onClientChange,
   onFilterToggle,
   isLoadingClientes,
+  onRefresh,
+  isRefreshing = false,
 }: DashboardHeaderProps) {
   if (isLoadingClientes) {
     return (
@@ -37,7 +41,7 @@ export default function DashboardHeader({
     );
   }
 
-  // ✅ Texto de sedes seleccionadas
+  // Texto de sedes seleccionadas
   const getSedesText = () => {
     if (selectedSedes.length === 0) return 'Ninguna sede';
     if (selectedSedes.length === 1) return selectedSedes[0];
@@ -70,6 +74,18 @@ export default function DashboardHeader({
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
           </div>
+
+          {/* ✅ Botón de recarga */}
+          {selectedClientId && onRefresh && (
+            <button
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="inline-flex items-center justify-center p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Recargar datos"
+            >
+              <RefreshCw size={18} className={isRefreshing ? "animate-spin" : ""} />
+            </button>
+          )}
 
           <button
             onClick={onFilterToggle}
