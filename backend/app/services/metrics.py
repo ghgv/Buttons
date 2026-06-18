@@ -104,3 +104,5 @@ def metrics_by_id_client(db: Session, client_id: int):
         "total_eventos": len(eventos_crudos),
         "sedes_info": list(sedes_agrupadas.values()) 
     }
+
+

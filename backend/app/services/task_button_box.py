@@ -11,6 +11,7 @@ def tarea_guardar_botonera(serie: str, letter: str, label: str, valor: int):
     db = SessionLocal()
     try:
         create_time = datetime.now(ZoneInfo("America/Bogota"))
+        
         dispositivo = db.query(ButtonBox).filter(ButtonBox.serie == int(serie)).first()
         
         if not dispositivo:
@@ -19,6 +20,7 @@ def tarea_guardar_botonera(serie: str, letter: str, label: str, valor: int):
     
         nuevo_log = ButtonLog(
             button_box_id=dispositivo.id, 
+            bathroom_id=dispositivo.bathroom_id, 
             letter=letter,
             label=label,
             create_time=create_time
@@ -26,12 +28,11 @@ def tarea_guardar_botonera(serie: str, letter: str, label: str, valor: int):
         
         db.add(nuevo_log)
         db.commit()
-        print(f"Registro guardado en 'botonera' | ID Interno: {dispositivo.id} (Serie: {serie}) | Letra: {letter}")
+        print(f"✅ Registro guardado en 'button_logs' | ID Box: {dispositivo.id} | ID Baño: {dispositivo.bathroom_id} | Letra: {letter}")
 
     except Exception as e:
         db.rollback()
-        print(f"Error al guardar el registro en 'botonera': {e}")
-        
+        print(f"❌ Error crítico al guardar el log de la botonera Serie {serie}: {e}")
     finally:
         db.close()
 
@@ -78,8 +79,6 @@ def get_logs_by_client(db: Session, client_id: int):
     Obtiene el historial unificado filtrado estrictamente por un ID de cliente,
     utilizando el nuevo esquema relacional basado en IDs y LEFT JOINs.
     """
-    
-    # 1. Query para los logs de los contadores (Ingresos) del cliente
     query_counters = select(
         CounterLog.create_time.label("fecha_hora"),
         Sede.name.label("sede"),
@@ -95,9 +94,8 @@ def get_logs_by_client(db: Session, client_id: int):
      .join(Level, Bathroom.level_id == Level.id)\
      .join(Sede, Level.sede_id == Sede.id)\
      .join(Client, Sede.client_id == Client.id)\
-     .where(Client.id == client_id) # <-- Filtro de cliente corregido
+     .where(Client.id == client_id)
 
-    # 2. Query para los logs de las botoneras (Alertas) del cliente
     query_buttons = select(
         ButtonLog.create_time.label("fecha_hora"),
         Sede.name.label("sede"),
@@ -113,9 +111,8 @@ def get_logs_by_client(db: Session, client_id: int):
      .join(Level, Bathroom.level_id == Level.id)\
      .join(Sede, Level.sede_id == Sede.id)\
      .join(Client, Sede.client_id == Client.id)\
-     .where(Client.id == client_id) # <-- Filtro de cliente corregido
+     .where(Client.id == client_id)
 
-    # 3. Unir consultas y ordenar
     unified_query = union_all(query_counters, query_buttons).alias("metricas_completas")
     
     stmt = select(unified_query).order_by(desc(unified_query.c.fecha_hora))
@@ -230,3 +227,76 @@ def eliminar_botonera(db: Session, button_box_id: int):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error interno al intentar eliminar la botonera en la base de datos."
         )
+    
+
+def get_all_global_logs(db: Session, limit: int = 100, offset: int = 0):
+    """
+    Devuelve el historial unificado de ingresos (contadores) y alertas (botoneras).
+    Usa OUTER JOINs para asegurar que los logs de dispositivos eliminados (huérfanos)
+    sigan apareciendo en el reporte global de analítica.
+    """
+    
+    # 1. Query para los logs de los contadores (Ingresos)
+    query_counters = select(
+        Client.name.label("cliente"),
+        CounterLog.create_time.label("fecha_hora"),
+        Sede.name.label("sede"),
+        Level.name.label("nivel"),
+        Bathroom.gender.label("genero_bano"),
+        Counter.serie.label("dispositivo_serie"),
+        literal("ingreso").label("tipo_evento"),
+        literal("flujo de personas").label("detalle_evento"),
+        CounterLog.amount.label("valor")
+    ).select_from(CounterLog)\
+     .join(Counter, CounterLog.counter_id == Counter.id, isouter=True)\
+     .join(Bathroom, Counter.bathroom_id == Bathroom.id, isouter=True)\
+     .join(Level, Bathroom.level_id == Level.id, isouter=True)\
+     .join(Sede, Level.sede_id == Sede.id, isouter=True)\
+     .join(Client, Sede.client_id == Client.id, isouter=True)
+
+    # 2. Query para los logs de las botoneras (Alertas)
+    query_buttons = select(
+        Client.name.label("cliente"),
+        ButtonLog.create_time.label("fecha_hora"),
+        Sede.name.label("sede"),
+        Level.name.label("nivel"),
+        Bathroom.gender.label("genero_bano"),
+        ButtonBox.serie.label("dispositivo_serie"),
+        literal("alerta").label("tipo_evento"),
+        ButtonLog.label.label("detalle_evento"),
+        literal(1).label("valor")
+    ).select_from(ButtonLog)\
+     .join(ButtonBox, ButtonLog.button_box_id == ButtonBox.id, isouter=True)\
+     .join(Bathroom, ButtonBox.bathroom_id == Bathroom.id, isouter=True)\
+     .join(Level, Bathroom.level_id == Level.id, isouter=True)\
+     .join(Sede, Level.sede_id == Sede.id, isouter=True)\
+     .join(Client, Sede.client_id == Client.id, isouter=True)
+
+    # 3. Unimos ambas consultas usando UNION ALL y le damos un alias
+    unified_query = union_all(query_counters, query_buttons).alias("logs_completos")
+
+    # 4. Construimos la sentencia final con ordenamiento y paginación dinámicos
+    stmt = select(unified_query)\
+        .order_by(desc(unified_query.c.fecha_hora))\
+        .limit(limit)\
+        .offset(offset)
+
+    # 5. Ejecutamos y parseamos el resultado
+    logs_crudos = db.execute(stmt).mappings().all()
+    
+    # Tratamos los valores None de los dispositivos eliminados para que el JSON sea amigable
+    historial = []
+    for log in logs_crudos:
+        log_dict = dict(log)
+        if log_dict["dispositivo_serie"] is None:
+            log_dict["dispositivo_serie"] = "Dispositivo Eliminado"
+        if log_dict["cliente"] is None:
+            log_dict["cliente"] = "N/A"
+        historial.append(log_dict)
+
+    return {
+        "registros_devueltos": len(historial),
+        "limit": limit,
+        "offset": offset,
+        "historial_eventos": historial
+    }

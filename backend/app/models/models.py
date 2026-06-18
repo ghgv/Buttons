@@ -164,16 +164,18 @@ class CounterLog(Base):
     id = Column(Integer, primary_key=True)
     create_time = Column(DateTime, nullable=True)
     counter_id = Column(Integer, ForeignKey("counters_1.id", ondelete="CASCADE"), index=True, nullable=True)
+    bathroom_id = Column(Integer, ForeignKey("bathrooms.id"), index=True, nullable=True)
     amount = Column(Integer, nullable=True)
 
     counter = relationship("Counter", back_populates="logs")
-
+    bathroom = relationship("Bathroom")
 
 class ButtonLog(Base):
     __tablename__ = "button_logs"
 
     id = Column(Integer, primary_key=True)
     button_box_id = Column(Integer, ForeignKey("button_box_1.id", ondelete="CASCADE"), index=True, nullable=True)
+    bathroom_id = Column(Integer, ForeignKey("bathrooms.id"), index=True, nullable=True)
     letter = Column(String(255), nullable=False)
     label = Column(String(255), nullable=False)
     create_time = Column(DateTime, nullable=False)
@@ -181,3 +183,4 @@ class ButtonLog(Base):
     # Relaciones
     # Asegúrate de que en tu modelo 'ButtonBox', el back_populates apunte a "logs"
     button_box = relationship("ButtonBox", back_populates="logs")
+    bathroom = relationship("Bathroom")

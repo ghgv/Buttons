@@ -12,25 +12,22 @@ def tarea_guardar_contadores(serie: str, valor: int):
     db = SessionLocal()
     try:
         create_time = datetime.now(ZoneInfo("America/Bogota"))
-        
-        # 1. Buscar el ID interno usando la serie del contador
-        # (Cambia 'Counters1' por el nombre exacto de tu modelo si varía)
         contador = db.query(Counter).filter(Counter.serie == int(serie)).first()
         
         if not contador:
             print(f"[Contadores] Error: No existe un contador registrado con la serie {serie}")
             return
         
-        # 2. Crear el log apuntando al nuevo id primario
         nuevo_log = CounterLog(
-            counter_id=contador.id,  # <-- Cambio clave
+            counter_id=contador.id,
+            bathroom_id=contador.bathroom_id,  
             amount=valor,
             create_time=create_time
         )
         
         db.add(nuevo_log)
         db.commit()
-        print(f"Registro guardado en 'contadores' | ID Interno: {contador.id} (Serie: {serie}) | Valor: {valor}")
+        print(f"Registro guardado en 'contadores' | ID Interno: {contador.id} (Serie: {serie}) | Valor: {valor} bathroom: {contador.bathroom_id}")
         
     except Exception as e:
         db.rollback()
