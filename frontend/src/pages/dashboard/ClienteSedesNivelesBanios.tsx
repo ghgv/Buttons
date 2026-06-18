@@ -3,9 +3,8 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { 
   Search, Plus, Droplets, ChevronRight, Trash2, Cpu, 
-  Radio, Activity, AlertTriangle, Edit3, X 
+  Radio, Activity, AlertTriangle, Edit3, X, Building2,
 } from "lucide-react";
-
 import type { CreateBanoRequest } from "../../zod/bano.zod";
 import type { ContadorResponse } from "../../types/contador.types"; 
 import AsignarContadorModal from "../../components/banos/AsignarContadorModal";
@@ -21,11 +20,13 @@ import {
   useGetBotonerasByBathroom, 
   useGetContadoresByBathroom, 
   useGetNivelesBySede,
+  useGetSedesByCliente,
+  useGetClientes,
   useUpdateContador,
   useUpdateBotonera
 } from "../../hooks";
 import Loading from "../../components/ui/Loading";
-import BackButton from "../../components/ui/BackButton";
+import Breadcrumb from "../../components/ui/Breadcrumb";
 import type { BotoneraResponse } from "../../types/botonera.types";
 
 interface Bano {
@@ -36,7 +37,7 @@ interface Bano {
 }
 
 export default function ClienteSedesNivelesBanios() {
-  const { sedeId, nivelId } = useParams();
+  const { clienteId, sedeId, nivelId } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   
@@ -48,7 +49,9 @@ export default function ClienteSedesNivelesBanios() {
   const [editingDevice, setEditingDevice] = useState<{ id: number; serie: string; tipo: "contador" | "botonera" } | null>(null);
   
   const { data: banos = [], isLoading: isLoadingBanos, refetch: refetchBanos } = useGetBanosByLevel(nivelId!);
-  const { data: niveles = [] } = useGetNivelesBySede(sedeId!);
+  const { data: niveles = [], isLoading: isLoadingNiveles } = useGetNivelesBySede(sedeId!);
+  const { data: sedes = [], isLoading: isLoadingSedes } = useGetSedesByCliente(clienteId!);
+  const { data: clientes = [], isLoading: isLoadingClientes } = useGetClientes();
   
   const { mutate: createBano, isPending } = useCreateBano();
   const { mutate: createContador, isPending: isContadorPending } = useCreateContador();
@@ -56,13 +59,42 @@ export default function ClienteSedesNivelesBanios() {
   const { mutate: deleteContador } = useDeleteContador();
   const { mutate: deleteBotonera } = useDeleteBotonera();
 
+  // Obtener nombres para el breadcrumb
+  const cliente = clientes.find(c => String(c.id) === clienteId);
+  const sede = sedes.find(s => String(s.id) === sedeId);
+  const nivel = niveles.find(n => String(n.id) === nivelId);
+
+
+
+  // ✅ Breadcrumb items - Jerarquía completa
+  const breadcrumbItems = [
+    { 
+      label: 'Listado de clientes', 
+      path: '/clientes',
+      icon: <Building2 size={14} />
+    },
+    
+   { 
+  label: `Listado de sedes del cliente ${cliente?.name || 'Cliente'}`, 
+  path: `/clientes/${clienteId}/sedes`,
+  isActive: true
+},
+    { 
+      label: `Listado de niveles de la sede ${sede?.name || 'sede'}`, 
+      path: `/clientes/${clienteId}/sedes/${sedeId}/niveles`,
+    },
+    { 
+      label: `Listado de baños de el nivel ${nivel?.name || 'nivel'}`, 
+      path: `/clientes/${clienteId}/sedes/${sedeId}/niveles/${nivelId}/banos`,
+      isActive: true
+    }
+  ];
+
   const currentBanoIdNumeric = expandedBano ? parseInt(expandedBano, 10) : null;
   const targetBanoIdNumeric = selectedBano ? parseInt(selectedBano.id, 10) : 0;
 
   const { data: contadores = [] } = useGetContadoresByBathroom(currentBanoIdNumeric);
   const { data: botoneras = [] } = useGetBotonerasByBathroom(currentBanoIdNumeric);
-
-  const nivel = niveles.find(n => n.id === sedeId);
 
   const filteredBanos = (banos as Bano[]).filter((bano) =>
     bano.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -79,19 +111,23 @@ export default function ClienteSedesNivelesBanios() {
     });
   };
 
-  if (isLoadingBanos) {
+  if (isLoadingBanos || isLoadingNiveles || isLoadingSedes || isLoadingClientes) {
     return <Loading text="Cargando baños..." />;
   }
 
   return (
     <div className="p-4 max-w-7xl mx-auto">
-      <BackButton />
+      {/* Breadcrumb - Navegación jerárquica */}
+      <Breadcrumb items={breadcrumbItems} />
 
-      {/* Header */}
+      {/* Header con información del cliente, sede y nivel */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Baños</h1>
-          <p className="text-sm text-gray-500 mt-1">Gestiona los baños y sus dispositivos asignados</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3 ">
+            <Droplets size={28} className="text-cyan-600" />
+            Baños
+          </h1>
+         
         </div>
         <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-xl transition-colors">
           <Plus size={18} /> Nuevo Baño
@@ -117,8 +153,24 @@ export default function ClienteSedesNivelesBanios() {
           <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
             <Droplets size={28} className="text-gray-400" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-1">No se encontraron baños</h3>
-          <p className="text-sm text-gray-500 mb-4">Comienza creando el primer baño asignado al nivel</p>
+          <h3 className="text-lg font-medium text-gray-900 mb-1">
+            {searchTerm ? "No se encontraron baños" : "No hay baños registrados"}
+          </h3>
+          <p className="text-sm text-gray-500 mb-4">
+            {searchTerm 
+              ? `No hay resultados para "${searchTerm}"`
+              : `Comienza creando el primer baño para ${nivel?.name || 'este nivel'}`
+            }
+          </p>
+          {!searchTerm && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors"
+            >
+              <Plus size={16} />
+              Nuevo Baño
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-3">

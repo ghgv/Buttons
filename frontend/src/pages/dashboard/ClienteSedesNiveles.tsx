@@ -1,24 +1,47 @@
 // pages/dashboard/ClienteSedesNiveles.tsx
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Search, Plus, Eye, Hash, ChevronRight } from "lucide-react";
+import { Search, Plus, Eye, Hash, ChevronRight, Building2 } from "lucide-react";
 import CrearNivelModal from "../../components/niveles/CrearNivelModal";
 import type { CreateNivelTypeSchema } from "../../zod/nivel.zod";
 import Loading from "../../components/ui/Loading";
-import { useCreateNivel, useGetNivelesBySede, useGetSedesByCliente } from "../../hooks";
-import BackButton from "../../components/ui/BackButton";
+import { useCreateNivel, useGetNivelesBySede, useGetSedesByCliente, useGetClientes } from "../../hooks";
+import Breadcrumb from "../../components/ui/Breadcrumb";
 
 export default function ClienteSedesNiveles() {
   const { clienteId, sedeId } = useParams();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { data: niveles = [], isLoading } = useGetNivelesBySede(sedeId!);
-  const { data: sedes = [] } = useGetSedesByCliente(clienteId!);
+  
+  const { data: niveles = [], isLoading: isLoadingNiveles } = useGetNivelesBySede(sedeId!);
+  const { data: sedes = [], isLoading: isLoadingSedes } = useGetSedesByCliente(clienteId!);
+  const { data: clientes = [], isLoading: isLoadingClientes } = useGetClientes();
   const { mutate: createNivel, isPending } = useCreateNivel();
 
   // Obtener nombres
-  const sede = sedes.find(s => s.id === sedeId);
+  const cliente = clientes.find(c => String(c.id) === clienteId);
+  const sede = sedes.find(s => String(s.id) === sedeId);
+
+
+
+  // ✅ Breadcrumb items - Jerarquía completa
+  const breadcrumbItems = [
+    { 
+      label: 'Listado de clientes', 
+      path: '/clientes',
+      icon: <Building2 size={14} />
+    },
+    { 
+      label: `Listado de sedes del cliente ${cliente?.name || 'Cliente'}`, 
+      path: `/clientes/${clienteId}/sedes`,
+    },
+    { 
+      label: `Listado de niveles de la sede ${sede?.name || 'sede'}`, 
+      path: `/clientes/${clienteId}/sedes/${sedeId}/niveles`,
+      isActive: true
+    }
+  ];
 
   // Filtrar niveles por nombre o número de piso
   const filteredNiveles = niveles.filter((nivel) =>
@@ -27,26 +50,30 @@ export default function ClienteSedesNiveles() {
   );
 
   const handleCreateNivel = (data: CreateNivelTypeSchema) => {
-    createNivel(data, { onSuccess: () => setIsModalOpen(false) });
+    createNivel(data, { 
+      onSuccess: () => {
+        setIsModalOpen(false);
+      } 
+    });
   };
 
-  if (isLoading) return <Loading text="Cargando sedes"/>;
-  
+  if (isLoadingNiveles || isLoadingSedes || isLoadingClientes) {
+    return <Loading text="Cargando niveles..." />;
+  }
 
   return (
     <div className="p-4 max-w-7xl mx-auto">
-      {/* Breadcrumb - Navegación */}
-      <BackButton />
+      {/* Breadcrumb - Navegación jerárquica */}
+      <Breadcrumb items={breadcrumbItems} />
 
-      {/* Header */}
+      {/* Header con información del cliente y sede */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-            Niveles de {sede?.name || "..."}
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <Hash size={28} className="text-green-600" />
+            Niveles
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Gestiona los pisos y niveles de esta sede
-          </p>
+         
         </div>
         <button 
           onClick={() => setIsModalOpen(true)} 
@@ -83,7 +110,7 @@ export default function ClienteSedesNiveles() {
           <p className="text-sm text-gray-500 mb-4">
             {searchTerm 
               ? `No hay resultados para "${searchTerm}"`
-              : `Comienza creando el primer nivel para ${sede?.name}`
+              : `Comienza creando el primer nivel para ${sede?.name || 'esta sede'}`
             }
           </p>
           {!searchTerm && (

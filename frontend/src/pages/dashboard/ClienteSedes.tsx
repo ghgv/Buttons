@@ -6,7 +6,7 @@ import type { CreateSedeRequest } from "../../zod/sede.zod";
 import CrearSedeModal from "../../components/sedes/CrearSedeModal";
 import { useCreateSede, useGetSedesByCliente, useGetClientes } from "../../hooks";
 import Loading from "../../components/ui/Loading";
-import BackButton from "../../components/ui/BackButton";
+import Breadcrumb from "../../components/ui/Breadcrumb";
 
 export default function ClienteSedes() {
   const { clienteId } = useParams();
@@ -14,16 +14,26 @@ export default function ClienteSedes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-   // ✅ Convertir clienteId de string a número
-// ✅ Convertir clienteId de string a número
-  
   const { data: sedes = [], isLoading } = useGetSedesByCliente(clienteId!);
-
-  const { data: clientes = [] } = useGetClientes();
+  const { data: clientes = [], isLoading: isLoadingClientes } = useGetClientes();
   const { mutate: createSede, isPending } = useCreateSede();
 
-  // Obtener el nombre del cliente
-  const cliente = clientes.find(c => c.id === clienteId);
+  // Obtener el cliente
+  const cliente = clientes.find(c => String(c.id) === clienteId);
+
+  // Breadcrumb items - Jerarquía completa
+  const breadcrumbItems = [
+    { 
+      label: 'Listado de clientes', 
+      path: '/clientes',
+      icon: <Building2 size={14} />
+    },
+    { 
+      label: `Listado de sedes del cliente ${cliente?.name || 'Cliente'}`, 
+      path: `/clientes/${clienteId}/sedes`,
+      isActive: true
+    }
+  ];
 
   // Filtrar sedes por nombre o dirección
   const filteredSedes = sedes.filter((sede) =>
@@ -32,25 +42,28 @@ export default function ClienteSedes() {
   );
 
   const handleCreateSede = (data: CreateSedeRequest) => {
-    createSede(data, { onSuccess: () => setIsModalOpen(false) });
+    createSede(data, { 
+      onSuccess: () => {
+        setIsModalOpen(false);
+      } 
+    });
   };
 
-  if (isLoading) return <Loading text="Cargando sedes..." />;
+  if (isLoading || isLoadingClientes) return <Loading text="Cargando sedes..." />;
 
   return (
     <div className="p-4 max-w-7xl mx-auto">
-      {/* Breadcrumb - Navegación */}
-      <BackButton />
+      {/* Breadcrumb - Navegación jerárquica */}
+      <Breadcrumb items={breadcrumbItems} />
 
-      {/* Header */}
+      {/* Header con información del cliente */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <Building2 size={28} className="text-purple-600" />
             Sedes
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Gestiona las sedes y ubicaciones de este cliente
-          </p>
+         
         </div>
         <button 
           onClick={() => setIsModalOpen(true)} 
@@ -87,7 +100,7 @@ export default function ClienteSedes() {
           <p className="text-sm text-gray-500 mb-4">
             {searchTerm 
               ? `No hay resultados para "${searchTerm}"`
-              : `Comienza creando la primera sede para ${cliente?.name}`
+              : `Comienza creando la primera sede para ${cliente?.name || 'este cliente'}`
             }
           </p>
           {!searchTerm && (
@@ -122,16 +135,22 @@ export default function ClienteSedes() {
 
                   {/* Acciones */}
                   <div className="flex items-center gap-1 sm:gap-2 ml-0 sm:ml-auto">
-                    <button className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Editar">
+                    <button 
+                      className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" 
+                      title="Editar"
+                    >
                       <Edit size={18} />
                     </button>
-                    <button className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar">
+                    <button 
+                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" 
+                      title="Eliminar"
+                    >
                       <Trash2 size={18} />
                     </button>
                     <button 
                       onClick={() => navigate(`/clientes/${clienteId}/sedes/${sede.id}/niveles`)} 
                       className="hidden sm:flex items-center gap-1 ml-2 text-sm text-gray-400 hover:text-purple-600 transition-colors"
-                      title="Ver detalles"
+                      title="Ver niveles"
                     >
                       <ChevronRight size={18} />
                     </button>
