@@ -107,16 +107,10 @@ export const botoneraService = {
    * Elimina una botonera usando su código único numérico.
    */
   delete: async (id: number): Promise<void> => {
-    console.group(`🗑️ [BotoneraService] Eliminando botonera ID: ${id}`);
-    try {
-      const url = `/botonera/${id}`;
-      await api.delete(url);
-      console.log(`✅ Botonera ID: ${id} removida exitosamente.`);
-      console.groupEnd();
-    } catch (error) {
-      console.error("❌ Error en delete:", error);
-      console.groupEnd();
-      throw error;
-    }
-  },
+  try {
+    await api.delete(`/botonera/${id}`);
+  } catch (error) {
+    return handleServiceError(error, `Error al intentar eliminar la botonera #${id}`);
+  }
+}
 };

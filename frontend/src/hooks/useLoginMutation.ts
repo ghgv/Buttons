@@ -14,6 +14,11 @@ export const useLoginMutation = () => {
   return useMutation<LoginResponse, Error, LoginRequest>({
     mutationFn: (credentials) => authService.login(credentials),
     onSuccess: (data) => {
+      // Log para ver los datos completos de la respuesta
+      console.log("📦 Datos de login recibidos:", data);
+      console.log("👤 User info:", data.user_info);
+      console.log("🔑 Token:", data.access_token);
+      
       // Sincronizamos con la nueva estructura del JSON
       setAuth(data.user_info, data.access_token);
       
@@ -21,6 +26,9 @@ export const useLoginMutation = () => {
       navigate("/dashboard", { replace: true });
     },
     onError: (error) => {
+      console.error("❌ Error en login:", error);
+      console.error("📝 Mensaje de error:", error.message);
+      
       Swal.fire({
         title: "Error de Acceso",
         text: error.message,
