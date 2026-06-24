@@ -5,15 +5,16 @@ import { useGetDashboardMetrics } from "../../hooks/useDashboard";
 import { Building2, AlertTriangle, RefreshCw } from "lucide-react";
 
 // Importar componentes
-import DashboardHeader from "./DashboardHeader";
-import DashboardFilters from "./DashboardFilters";
-import DashboardStats from "./DashboardStats";
-import FlujoPersonasChart from "./charts/FlujoPersonasChart";
-import AlertasPorSedeChart from "./charts/AlertasPorSedeChart";
-import EventosDiariosChart from "./charts/EventosDiariosChart";
-import AlertasPorDiaChart from "./charts/AlertasPorDiaChart";
-import UsoGeneroChart from "./charts/UsoGeneroChart";
+
 import Loading from "../../components/ui/Loading";
+import DashboardHeader from "./dashboard/DashboardHeader";
+import DashboardFilters from "./dashboard/DashboardFilters";
+import DashboardStats from "./dashboard/DashboardStats";
+import FlujoPersonasChart from "./dashboard/charts/FlujoPersonasChart";
+import AlertasPorSedeChart from "./dashboard/charts/AlertasPorSedeChart";
+import EventosDiariosChart from "./dashboard/charts/EventosDiariosChart";
+import UsoGeneroChart from "./dashboard/charts/UsoGeneroChart";
+import AlertasPorDiaChart from "./dashboard/charts/AlertasPorDiaChart";
 
 // Clave para localStorage
 const STORAGE_KEY = "dashboard_selected_client";

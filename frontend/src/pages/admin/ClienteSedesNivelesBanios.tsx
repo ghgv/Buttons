@@ -70,22 +70,22 @@ export default function ClienteSedesNivelesBanios() {
   const breadcrumbItems = [
     { 
       label: 'Listado de clientes', 
-      path: '/clientes',
+      path: '/admin/clientes',
       icon: <Building2 size={14} />
     },
     
    { 
   label: `Listado de sedes del cliente ${cliente?.name || 'Cliente'}`, 
-  path: `/clientes/${clienteId}/sedes`,
+  path: `/admin/clientes/${clienteId}/sedes`,
   isActive: true
 },
     { 
       label: `Listado de niveles de la sede ${sede?.name || 'sede'}`, 
-      path: `/clientes/${clienteId}/sedes/${sedeId}/niveles`,
+      path: `/admin/clientes/${clienteId}/sedes/${sedeId}/niveles`,
     },
     { 
       label: `Listado de baños de el nivel ${nivel?.name || 'nivel'}`, 
-      path: `/clientes/${clienteId}/sedes/${sedeId}/niveles/${nivelId}/banos`,
+      path: `/admin/clientes/${clienteId}/sedes/${sedeId}/niveles/${nivelId}/banos`,
       isActive: true
     }
   ];

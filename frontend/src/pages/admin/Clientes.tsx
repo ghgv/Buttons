@@ -142,7 +142,7 @@ export default function Clientes() {
                       <Trash2 size={18} />
                     </button>
                     <button 
-                      onClick={() => navigate(`/clientes/${cliente.id}/sedes`)} 
+                      onClick={() => navigate(`/admin/clientes/${cliente.id}/sedes`)} 
                       className="hidden sm:flex items-center gap-1 ml-2 text-sm text-gray-400 hover:text-purple-600 transition-colors"
                       title="Ver sedes"
                     >

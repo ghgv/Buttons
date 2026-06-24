@@ -1,156 +1,125 @@
 // routes/RoutePrivate.tsx
-import { Navigate, Outlet, Link, useLocation } from "react-router";
-import { 
-  LayoutDashboard, 
-  LogOut,
-  Building2,
-  AlertTriangle,
-  Sheet,
-  Menu,
-  X
-} from "lucide-react";
+import { Navigate, Routes, Route } from "react-router";
 import { useAuth } from "../hooks/useAuth";
-import { useState } from "react";
 
-interface PrivateLayoutProps {
-  isAuthenticated: boolean;
-}
+// Layouts
+import AdminLayout from "../layouts/AdminLayout";
+import CoordinatorLayout from "../layouts/CoordinatorLayout";
 
-export default function RoutePrivate({ isAuthenticated }: PrivateLayoutProps) {
-  const { user, logout } = useAuth();
-  const location = useLocation();
-  const [menuOpen, setMenuOpen] = useState(false);
+// Páginas Admin - Desde pages/admin/
+import Dashboard from "../pages/admin/Dashboard";
+import Alertas from "../pages/admin/Alertas";
+import Clientes from "../pages/admin/Clientes";
+import ClienteSedes from "../pages/admin/ClienteSedes";
+import ClienteSedesNiveles from "../pages/admin/ClienteSedesNiveles";
+import ClienteSedesNivelesBanios from "../pages/admin/ClienteSedesNivelesBanios";
+import Reportes from "../pages/admin/Reportes";
 
-  // Si no está autenticado, redirige al login
+// Páginas Coordinator
+import CoordinatorAlertas from "../pages/coordinator/Alertas";
+import CoordinatorTareas from "../pages/coordinator/Tareas";
+import type { JSX } from "react/jsx-runtime";
+import CoordinatorDashboard from "../pages/coordinator/CoordinatorDashboard";
+import Trazabilidad from "../pages/admin/Trazabilidad";
+
+// Componente para redirigir según el rol
+const RoleBasedRedirect = () => {
+  const { user, isAuthenticated } = useAuth();
+  
+  
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.role === 'client_admin') {
+    return <Navigate to="/admin/dashboard" replace />;
+  } else if (user.role === 'coordinator') {
+    return <Navigate to="/coordinator/alertas" replace />;
+  }
+
+  return <Navigate to="/login" replace />;
+};
+
+// ✅ Componente para proteger rutas por rol
+const RoleGuard = ({ 
+  children, 
+  allowedRoles 
+}: { 
+  children: JSX.Element, 
+  allowedRoles: string[] 
+}) => {
+  const { user, isAuthenticated } = useAuth();
+  
+  
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!allowedRoles.includes(user.role)) {
+    // Redirige según el rol
+    if (user.role === 'client_admin') {
+      return <Navigate to="/admin/dashboard" replace />;
+    } else if (user.role === 'coordinator') {
+      return <Navigate to="/coordinator/alertas" replace />;
+    }
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+export default function RoutePrivate() {
+  const { isAuthenticated } = useAuth();
+
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // Menús del nav
-  const menuItems = [
-    { 
-      path: "/dashboard", 
-      icon: LayoutDashboard, 
-      label: "Dashboard",
-      description: "Visión general"
-    },
-    { 
-      path: "/alertas",
-      icon: AlertTriangle, 
-      label: "Alertas",
-      description: "Monitoreo de incidentes"
-    },
-    { 
-      path: "/clientes", 
-      icon: Building2, 
-      label: "Clientes",
-      description: "Gestión de clientes"
-    },
-    {
-      path: "/reportes",
-      icon: Sheet,
-      label: "Reportes",
-      description: "Análisis y estadísticas"
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Botón hamburguesa - Siempre visible */}
-      <button
-        onClick={() => setMenuOpen(true)}
-        className="fixed top-1 left-1 z-50 bg-purple-900 text-white p-1.5 rounded-md shadow-lg hover:bg-purple-800 transition-colors"
-        aria-label="Abrir menú"
+    <Routes>
+      {/* Redirección raíz */}
+      <Route path="/" element={<RoleBasedRedirect />} />
+
+      {/* Rutas Admin - Protegidas con RoleGuard */}
+      <Route 
+        path="/admin" 
+        element={
+          <RoleGuard allowedRoles={['client_admin']}>
+            <AdminLayout />
+          </RoleGuard>
+        }
       >
-        <Menu size={20} />
-      </button>
+        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="alertas" element={<Alertas />} />
+        <Route path="clientes" element={<Clientes />} />
+        <Route path="reportes" element={<Reportes />} />
+        <Route path="trazabilidad" element={<Trazabilidad />} />
+        
+        {/* Rutas anidadas de Clientes -> Sedes -> Niveles -> Baños */}
+        <Route path="clientes/:clienteId/sedes/:sedeId/niveles/:nivelId/banos" element={<ClienteSedesNivelesBanios />} />
+        <Route path="clientes/:clienteId/sedes/:sedeId/niveles" element={<ClienteSedesNiveles />} />
+        <Route path="clientes/:clienteId/sedes" element={<ClienteSedes />} />
+      </Route>
 
-      {/* Menú flotante - Solo ocupa el espacio del contenido */}
-      {menuOpen && (
-        <div className="fixed top-1 left-1 z-50">
-          <nav className="bg-white rounded-md shadow-xl w-70 overflow-hidden">
-            {/* Cabecera con botón de cerrar */}
-            <div className="p-4 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-900 to-purple-700 flex items-center justify-center">
-                    <span className="text-white text-xl font-black">ai</span>
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-800">Nubeware</h2>
-                    <p className="text-xs text-gray-500">IoT Platform</p>
-                  </div>
-                </div>
-                
-                {/* Botón de cerrar */}
-                <button
-                  onClick={() => setMenuOpen(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500"
-                  aria-label="Cerrar menú"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              
-              {/* Información del usuario */}
-              <div className="mt-4 pt-3 border-t border-gray-100">
-                <p className="text-sm font-medium text-gray-800">{user?.name || "Usuario"}</p>
-              </div>
-            </div>
+      {/* Rutas Coordinator - Protegidas con RoleGuard */}
+      <Route 
+        path="/coordinator" 
+        element={
+          <RoleGuard allowedRoles={['coordinator']}>
+            <CoordinatorLayout />
+          </RoleGuard>
+        }
+      >
+       <Route index element={<Navigate to="/coordinator/dashboard" replace />} />
+         <Route path="dashboard" element={<CoordinatorDashboard />} />
+         <Route path="alertas" element={<CoordinatorAlertas />} />
+         <Route path="tareas" element={<CoordinatorTareas />} />
+      </Route>
 
-            {/* Enlaces de navegación */}
-            <div className="py-2">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path;
-                
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setMenuOpen(false)}
-                    className={`
-                      flex items-center gap-3 px-4 py-3 mx-2 rounded-lg text-sm transition-all duration-200
-                      ${isActive 
-                        ? "bg-purple-50 text-purple-900" 
-                        : "text-gray-700 hover:bg-gray-50"
-                      }
-                    `}
-                  >
-                    <Icon size={20} className={isActive ? "text-purple-600" : "text-gray-400"} />
-                    <div className="flex-1">
-                      <p className="font-medium">{item.label}</p>
-                      <p className="text-xs text-gray-500">{item.description}</p>
-                    </div>
-                    {isActive && (
-                      <div className="w-1 h-6 bg-purple-600 rounded-full"></div>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-
-            {/* Botón de cerrar sesión */}
-            <div className="p-4 border-t border-gray-100">
-              <button
-                onClick={() => {
-                  logout();
-                  setMenuOpen(false);
-                }}
-                className="flex items-center gap-3 px-4 py-2 w-full text-sm text-red-600 hover:bg-red-50 rounded-lg transition-all"
-              >
-                <LogOut size={18} />
-                <span>Cerrar Sesión</span>
-              </button>
-            </div>
-          </nav>
-        </div>
-      )}
-
-      {/* Contenido principal */}
-      <main className="p-4 sm:p-6 lg:p-8">
-        <Outlet />
-      </main>
-    </div>
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
