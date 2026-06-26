@@ -7,4 +7,17 @@ import { useGetBotonerasByBathroom, useCreateBotonera, useDeleteBotonera, useUpd
 import { useGetReporteMetrics } from "./useReportes";
 import { useAuth } from "./useAuth";
 
-export { useCreateCliente, useCreateSede, useGetSedesByClient, useCreateNivel, useGetNivelesBySede, useGetClientes, useGetSedesByCliente, useAuth, useCreateBano, useGetBanosByLevel, useGetContadoresByBathroom, useCreateContador, useDeleteContador, useGetBotonerasByBathroom, useCreateBotonera, useDeleteBotonera, useGetReporteMetrics, useUpdateContador, useUpdateBotonera };
+// ... imports anteriores
+import { useGetSubclientesByClientLocalId } from "./useSubcliente";
+
+// ✅ Importamos los hooks de Nubeware
+import { useGetNubewareClientes, useCreateNubewareCliente  } from "./useNubewareCliente";
+
+export { useCreateCliente, useCreateSede, useGetSedesByClient, useCreateNivel, useGetNivelesBySede, useGetClientes, useGetSedesByCliente, useAuth, useCreateBano, useGetBanosByLevel, useGetContadoresByBathroom, useCreateContador, useDeleteContador, useGetBotonerasByBathroom, useCreateBotonera, useDeleteBotonera, useGetReporteMetrics, useUpdateContador, useUpdateBotonera,
+
+
+     // ✅ Exportamos los hooks de Nubeware
+  useGetNubewareClientes,
+  useCreateNubewareCliente,
+  useGetSubclientesByClientLocalId
+ };

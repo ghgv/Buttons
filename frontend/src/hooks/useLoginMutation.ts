@@ -8,10 +8,11 @@ import { useAuthStore } from "../store/auth.store";
 import type { LoginResponse } from "../types/auth.types";
 import type { LoginRequest } from "../zod/auth.zod";
 
-// Mapeo de roles a rutas
+// ✅ Mapeo de roles a rutas (actualizado con super_user)
 const ROLE_ROUTES: Record<string, string> = {
   'client_admin': '/admin/dashboard',
   'coordinator': '/coordinator/dashboard',
+  'super_user': '/nubeware/dashboard', // ✅ Nuevo rol
 };
 
 export const useLoginMutation = () => {
@@ -31,7 +32,7 @@ export const useLoginMutation = () => {
       
       toast.success(`¡Sesión iniciada como ${data.user_info.name}!`);
       
-      // Redirigir según el rol
+      // ✅ Redirigir según el rol (ahora incluye super_user)
       const role = data.user_info.role;
       const redirectPath = ROLE_ROUTES[role] || '/dashboard';
       
