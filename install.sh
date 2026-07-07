@@ -85,6 +85,7 @@ if command -v mysql >/dev/null 2>&1; then
     echo "  Ingresa los datos de conexión a tu BD existente:"
     echo ""
     read -p "  Host BD          (ej: 127.0.0.1): " DB_HOST
+    DB_HOST=${DB_HOST:-localhost}
     read -p "  Puerto BD        [3306]:           " DB_PORT
     DB_PORT=${DB_PORT:-3306}
     read -p "  Nombre de la BD:                   " DB_NAME
