@@ -173,6 +173,28 @@ echo "  ✓ Archivo backend/.env generado."
 
 
 # =====================================================
+# CREACIÓN DEL ENTORNO VIRTUAL
+# =====================================================
+
+echo "  → Creando entorno virtual del backend..."
+
+if [ ! -d "$BACKEND_DIR/venv" ]; then
+    python3 -m venv "$BACKEND_DIR/venv"
+fi
+
+echo "  → Activando entorno virtual..."
+
+source "$BACKEND_DIR/venv/bin/activate"
+
+echo "  → Actualizando pip..."
+python -m pip install --upgrade pip
+
+echo "  → Instalando dependencias del backend..."
+pip install -r "$BACKEND_DIR/requirements.txt"
+
+deactivate
+
+# =====================================================
 # PASO 4 — VALIDACIÓN DE CONEXIÓN A BASE DE DATOS
 # =====================================================
 progress "Validando conexión a la base de datos"
