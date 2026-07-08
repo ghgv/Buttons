@@ -18,30 +18,26 @@ interface AuthRightPanelProps {
 const defaultFeatures = [
   {
     icon: Users,
-    title: "Conteo Preciso",
-    description: "Sabé exactamente cuántas personas ingresan y salen en tiempo real."
+    title: "Conteo",
+    description: "Cuántas personas ingresan y salen en tiempo real."
   },
   {
     icon: Activity,
-    title: "Alertas Automáticas",
-    description: "Recibe notificaciones cuando se requiera mantenimiento o reposición."
+    title: "Alertas",
+    description: "Notificaciones cuando se requiera mantenimiento o reposición."
   },
   {
     icon: TrendingUp,
-    title: "Métricas Globales",
+    title: "Métricas",
     description: "Análisis de afluencia para optimizar recursos y presupuestos."
   },
-  {
-    icon: ShieldCheck,
-    title: "Seguridad IoT",
-    description: "Datos protegidos con encriptación de extremo a extremo."
-  }
+  
 ];
 
 
 
 export default function AuthRightPanel({ 
-  title = "Controla la afluencia de tus baños mediante",
+  title = "",
   subtitle = "Monitoreo en tiempo real del conteo de personas, niveles de insumos y alertas automáticas para una gestión eficiente de los espacios.",
   features = defaultFeatures,
 }: AuthRightPanelProps) {
