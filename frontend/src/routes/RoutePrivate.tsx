@@ -32,6 +32,11 @@ import SubclientesNubeware from "../pages/nubeware/SubclientesNubeware";
 // Componente para redirigir según el rol
 const RoleBasedRedirect = () => {
   const { user, isAuthenticated } = useAuth();
+    console.log("AUTH", {
+    isAuthenticated,
+    role: user?.role,
+    user,
+  });
   
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
@@ -41,10 +46,9 @@ const RoleBasedRedirect = () => {
     return <Navigate to="/admin/dashboard" replace />;
   } else if (user.role === 'coordinator') {
     return <Navigate to="/coordinator/alertas" replace />;
-  } else if (user.role === 'super_user') {
-    return <Navigate to="/nubeware/dashboard" replace />; // ✅ 1 'e'
+  } else if (user.role === "nubeware_admin") {
+      return <Navigate to="/nubeware/dashboard" replace />;
   }
-
   return <Navigate to="/login" replace />;
 };
 
@@ -67,8 +71,8 @@ const RoleGuard = ({
       return <Navigate to="/admin/dashboard" replace />;
     } else if (user.role === 'coordinator') {
       return <Navigate to="/coordinator/alertas" replace />;
-    } else if (user.role === 'super_user') {
-      return <Navigate to="/nubeware/dashboard" replace />; // ✅ 1 'e'
+    } else if (user.role === "nubeware_admin") {
+      return <Navigate to="/nubeware/dashboard" replace />;
     }
     return <Navigate to="/login" replace />;
   }
@@ -126,7 +130,7 @@ export default function RoutePrivate() {
       <Route 
         path="/nubeware" 
         element={
-          <RoleGuard allowedRoles={['super_user']}>
+          <RoleGuard allowedRoles={["nubeware_admin"]}>
             <NubewareLayout />
           </RoleGuard>
         }
