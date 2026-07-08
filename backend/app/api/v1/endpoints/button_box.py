@@ -31,6 +31,7 @@ async def botonera_c(serie: str, valor: int, background_tasks: BackgroundTasks):
 
 @router.get("/d.php")
 async def botonera_d(serie: str, valor: int, background_tasks: BackgroundTasks): # Cambié el nombre de la función
+    print(f"Recibido: serie={serie}, valor={valor}")
     background_tasks.add_task(task_button_box.tarea_guardar_botonera, serie, "D", "Baño sin papel", valor)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

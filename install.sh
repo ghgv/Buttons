@@ -151,7 +151,7 @@ echo "  │       PUERTOS DE LA APLICACIÓN          │"
 echo "  └─────────────────────────────────────────┘"
 echo ""
 read -p "  Puerto Backend   [8000]: " APP_PORT
-APP_PORT=${APP_PORT:-8000}
+APP_PORT=${APP_PORT:-80}
 read -p "  Puerto Frontend  [5173]: " FRONTEND_PORT
 FRONTEND_PORT=${FRONTEND_PORT:-5173}
 echo ""
@@ -168,6 +168,21 @@ APP_HOST=0.0.0.0
 APP_PORT=$APP_PORT
 DEBUG=False
 EOF
+
+PYTHON_BIN="$BACKEND_DIR/venv/bin/python"
+
+if [ "$APP_PORT" -lt 1024 ]; then
+    echo "→ Configurando permisos para usar el puerto $APP_PORT..."
+
+    sudo setcap 'cap_net_bind_service=+ep' "$PYTHON_BIN"
+
+    if getcap "$PYTHON_BIN" | grep -q cap_net_bind_service; then
+        echo "   ✓ Permiso aplicado correctamente."
+    else
+        echo "   ❌ No fue posible aplicar el permiso."
+        exit 1
+    fi
+fi
 
 echo "  ✓ Archivo backend/.env generado."
 
