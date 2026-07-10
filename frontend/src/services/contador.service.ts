@@ -17,7 +17,7 @@ export const contadorService = {
    */
   create: async (data: CreateContadorRequest): Promise<ContadorResponse> => {
     try {
-      const { data: response } = await api.post<ContadorResponse>("/contadores", data);
+      const { data: response } = await api.post<ContadorResponse>("/contadores/", data);
       return response;
     } catch (error) {
       return handleServiceError(error, "Error al crear el contador en el servidor");

@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from app.api.v1.endpoints.counter import router as contadores_router
@@ -9,9 +9,32 @@ from app.api.v1.endpoints.sedes import router as sedes_router
 from app.api.v1.endpoints.levels import router as levels_router
 from app.api.v1.endpoints.bathrooms import route as bathroom_router
 from app.api.v1.endpoints import metrics
+from app.core.logger import logger
+
 app = FastAPI(
     title="API Contadores"
 )
+
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+
+    logger.info(
+        f"--> {request.method} {request.url.path} "
+        f"IP={request.client.host} "
+        f"QUERY={request.url.query}"
+    )
+
+    response = await call_next(request)
+
+    logger.info(
+        f"<-- {request.method} {request.url.path} "
+        f"STATUS={response.status_code}"
+    )
+
+    return response
+
 
 app.add_middleware(
     CORSMiddleware,

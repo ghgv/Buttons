@@ -7,7 +7,7 @@ import type { NivelResponse } from "../types/nivel.types";
 export const nivelService = {
   create: async (data: CreateNivelTypeSchema): Promise<NivelResponse> => {
     try {
-      const { data: response } = await api.post<NivelResponse>("/levels", data);
+      const { data: response } = await api.post<NivelResponse>("/levels/", data);
       return response;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -18,7 +18,7 @@ export const nivelService = {
   },
   
   getAll: async (): Promise<NivelResponse[]> => {
-    const { data } = await api.get<NivelResponse[]>("/levels");
+    const { data } = await api.get<NivelResponse[]>("/levels/");
     return data;
   },
   

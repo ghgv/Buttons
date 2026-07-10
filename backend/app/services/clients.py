@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from app.models.models import Client
 from app.schemas.client import ClientCreate
+from app.core.logger import logger
 
 def create_client(db: Session, client_data: ClientCreate):
     """
@@ -31,18 +32,16 @@ def create_client(db: Session, client_data: ClientCreate):
     )
 
     try:
-
         db.add(new_client)
-        
         db.commit()
-        
         db.refresh(new_client)
-        
+        logger.info(f"[Clientes] Cliente creado exitosamente | ID Interno: {new_client.id} | Nombre: {client_data.name} | NIT: {client_data.nit} | Email: {client_data.email}")
         return new_client
 
     except Exception as e:
         # Si algo falla a nivel de base de datos (ej. se cae la conexión), deshacemos todo
         db.rollback()
+        logger.error(f"[Clientes] Error crítico en base de datos al crear cliente: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error interno al guardar el cliente: {str(e)}"

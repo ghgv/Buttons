@@ -3,6 +3,7 @@ from fastapi import HTTPException, status
 from app.models.models import Level
 from app.schemas.level import LevelCreate
 from app.models.models import Sede
+from app.core.logger import logger
 
 def get_levels(db: Session, sede_id: int):
     return db.query(Level).filter(Level.sede_id == sede_id).all()
@@ -21,4 +22,5 @@ def create_level(db: Session, level_data: LevelCreate):
     db.add(new_level)
     db.commit()
     db.refresh(new_level)
+    logger.info(f"[Niveles] Nivel creado exitosamente | ID Interno: {new_level.id} | Nombre: {level_data.name} | Piso: {level_data.floor} | Sede ID: {level_data.sede_id}")
     return new_level

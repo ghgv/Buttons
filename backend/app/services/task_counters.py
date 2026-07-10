@@ -7,6 +7,7 @@ from app.models.models import Counter
 from app.schemas.counter import CounterCreate
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
+from app.core.logger import logger
 
 def tarea_guardar_contadores(serie: str, valor: int):
     db = SessionLocal()
@@ -31,7 +32,7 @@ def tarea_guardar_contadores(serie: str, valor: int):
         
     except Exception as e:
         db.rollback()
-        print(f"Error al guardar en 'contadores': {e}")
+        logger.error(f"[Contadores] Error al guardar en 'contadores': {e}")
         
     finally:
         db.close()
@@ -41,6 +42,7 @@ def crear_contador(db: Session, contador: CounterCreate):
     Registra un nuevo contador validando duplicados de serie.
     Usa la sesión inyectada por el endpoint para mantener consistencia.
     """
+    logger.info(f"[Contadores] Iniciando creación de contador con serie: {contador.serie}")
     serie_existente = db.query(Counter).filter(Counter.serie == contador.serie).first()
     if serie_existente:
         raise HTTPException(
@@ -59,11 +61,12 @@ def crear_contador(db: Session, contador: CounterCreate):
         db.add(nuevo_contador)
         db.commit()
         db.refresh(nuevo_contador)
+        logger.info(f"[Contadores] Contador creado exitosamente | ID Interno: {nuevo_contador.id} (Serie: {contador.serie}) | Baño ID: {contador.bathroom_id}")
         return nuevo_contador
         
     except Exception as e:
         db.rollback()
-        print(f"Error crítico en base de datos al crear contador: {e}")
+        logger.error(f"[Contadores] Error crítico en base de datos al crear contador: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error interno al procesar el registro en la base de datos"

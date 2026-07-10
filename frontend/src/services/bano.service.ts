@@ -8,7 +8,7 @@ export const banoService = {
   // Crear un nuevo baño
   create: async (data: CreateBanoRequest): Promise<BanoResponse> => {
     try {
-      const { data: response } = await api.post<BanoResponse>("/bathrooms", data);
+      const { data: response } = await api.post<BanoResponse>("/bathrooms/", data);
       return response;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {

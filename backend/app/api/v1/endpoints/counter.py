@@ -10,12 +10,14 @@ from app.schemas.counter import (
 )
 from app.api.deps import get_admin_user, get_db
 from sqlalchemy.orm import Session
+from app.core.logger import logger
 
 router = APIRouter(prefix="/contadores", tags=["contadores"])
 
 @router.get("/cp.php")
 async def obtener_contadores(serie: str, valor: int, background_tasks: BackgroundTasks):
     print(f"Recibida petición GET en /contadores/cp.php | Serie: {serie}")
+    logger.info(f"[Contadores] Recibida petición GET en /contadores/cp.php | Serie: {serie} | Valor: {valor}")
     
     background_tasks.add_task(task_counters.tarea_guardar_contadores, serie, valor)
     
@@ -34,6 +36,7 @@ def crear_nuevo_contador(
     # current_user: dict = Depends(get_admin_user)
 ):
     nuevo_contador = task_counters.crear_contador(db=db, contador=contador_in)
+    logger.info(f"[Contadores] Contador creado exitosamente | ID Interno: {nuevo_contador.id} | Serie: {nuevo_contador.serie} | Baño ID: {nuevo_contador.bathroom_id}")
     return nuevo_contador
     
 
@@ -75,4 +78,5 @@ def remover_contador(counter_id: int, db: Session = Depends(get_db)):
     Los logs de ingresos asociados se mantendrán almacenados con su identificador en NULL.
     """
     task_counters.eliminar_contador(db, counter_id)
+    logger.info(f"[Contadores] Eliminando contador | ID Interno: {counter_id}")
     return None

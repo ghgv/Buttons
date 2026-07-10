@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from app.models.models import User
 from app.core.security import get_password_hash, verify_password
+from app.core.logger import logger
 
 def create_user(db: Session, client_id: int, name: str, email: str, password: str, role: str):
     # 1. Verificamos si el correo ya existe
@@ -28,11 +29,12 @@ def create_user(db: Session, client_id: int, name: str, email: str, password: st
         db.add(nuevo_usuario)
         db.commit()
         db.refresh(nuevo_usuario)
-        
+        logger.info(f"[Usuarios] Usuario registrado exitosamente | ID Interno: {nuevo_usuario.id} | Email: {email} | Rol: {role}")
         return {"success": True, "message": "Usuario registrado exitosamente"}
         
     except Exception as e:
         db.rollback()
+        logger.error(f"[Usuarios] Error crítico en base de datos al registrar usuario: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error interno al guardar el usuario: {str(e)}"

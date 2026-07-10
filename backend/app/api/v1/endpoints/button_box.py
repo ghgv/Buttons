@@ -9,6 +9,7 @@ from app.schemas.button_box import (
     ButtonBoxWithLogsResponse
 )
 from app.api.deps import get_admin_user, get_db
+from app.core.logger import logger
 
 from sqlalchemy.orm import Session
 
@@ -17,21 +18,24 @@ router = APIRouter(prefix="/botonera", tags=["botonera"])
 @router.get("/a.php")
 async def botonera_a(serie: str, valor: int, background_tasks: BackgroundTasks):
     background_tasks.add_task(task_button_box.tarea_guardar_botonera, serie, "A", "Baño con mal olor", valor)
+    logger.info(f"[Botonera A] Recibido: serie={serie}, valor={valor}")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @router.get("/b.php")
 async def botonera_b(serie: str, valor: int, background_tasks: BackgroundTasks): # Cambié el nombre de la función
     background_tasks.add_task(task_button_box.tarea_guardar_botonera, serie, "B", "Baño sin jabon", valor)
+    logger.info(f"[Botonera B] Recibido: serie={serie}, valor={valor}")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @router.get("/c.php")
 async def botonera_c(serie: str, valor: int, background_tasks: BackgroundTasks): # Cambié el nombre de la función
     background_tasks.add_task(task_button_box.tarea_guardar_botonera, serie, "C", "Baño sucio", valor)
+    logger.info(f"[Botonera C] Recibido: serie={serie}, valor={valor}")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @router.get("/d.php")
 async def botonera_d(serie: str, valor: int, background_tasks: BackgroundTasks): # Cambié el nombre de la función
-    print(f"Recibido: serie={serie}, valor={valor}")
+    logger.info(f"[Botonera D] Recibido: serie={serie}, valor={valor}")
     background_tasks.add_task(task_button_box.tarea_guardar_botonera, serie, "D", "Baño sin papel", valor)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -47,6 +51,7 @@ def crear_nueva_botonera(
     # current_user: dict = Depends(get_admin_user)
 ):
     nueva_botonera = task_button_box.crear_botonera(db=db, botonera=botonera_in)
+    logger.info(f"[Botoneras] Botonera creada exitosamente | ID Interno: {nueva_botonera.id} | Serie: {nueva_botonera.serie} | Baño ID: {nueva_botonera.bathroom_id}")
     return nueva_botonera
 
 @router.get("/logs")
@@ -98,5 +103,6 @@ def remover_botonera(button_box_id: int, db: Session = Depends(get_db)):
     Elimina una botonera del sistema por su ID primario.
     Los logs asociados se conservarán en la base de datos con su identificador en NULL.
     """
+    logger.info(f"[Botoneras] Eliminando botonera | ID Interno: {button_box_id}")
     task_button_box.eliminar_botonera(db, button_box_id)
     return None

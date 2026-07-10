@@ -6,6 +6,7 @@ from app.schemas.button_box import ButtonBoxCreate
 from sqlalchemy.orm import Session
 from sqlalchemy import select, literal, union_all, desc
 from fastapi import HTTPException, status
+from app.core.logger import logger
 
 def tarea_guardar_botonera(serie: str, letter: str, label: str, valor: int):
     db = SessionLocal()
@@ -16,6 +17,7 @@ def tarea_guardar_botonera(serie: str, letter: str, label: str, valor: int):
         
         if not dispositivo:
             print(f"[Botonera] Error: No existe un dispositivo registrado con la serie {serie}")
+            logger.error(f"[Botonera] Error: No existe un dispositivo registrado con la serie {serie}")
             return
     
         nuevo_log = ButtonLog(
@@ -29,10 +31,11 @@ def tarea_guardar_botonera(serie: str, letter: str, label: str, valor: int):
         db.add(nuevo_log)
         db.commit()
         print(f"✅ Registro guardado en 'button_logs' | ID Box: {dispositivo.id} | ID Baño: {dispositivo.bathroom_id} | Letra: {letter}")
-
+        logger.info(f"[Botonera] Registro guardado en 'button_logs' | ID Box: {dispositivo.id} | ID Baño: {dispositivo.bathroom_id} | Letra: {letter}")
     except Exception as e:
         db.rollback()
         print(f"❌ Error crítico al guardar el log de la botonera Serie {serie}: {e}")
+        logger.error(f"[Botonera] Error crítico al guardar el log de la botonera Serie {serie}: {e}")
     finally:
         db.close()
 
@@ -44,6 +47,7 @@ def crear_botonera(db: Session, botonera: ButtonBoxCreate):
     # 1. Validar si la serie ya existe en el sistema (Error 400)
     serie_existente = db.query(ButtonBox).filter(ButtonBox.serie == botonera.serie).first()
     if serie_existente:
+        logger.warning(f"[Botoneras] Intento de creación fallido: Serie duplicada {botonera.serie}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Error: Ya existe una botonera registrada con la serie {botonera.serie}"
@@ -60,11 +64,12 @@ def crear_botonera(db: Session, botonera: ButtonBoxCreate):
         db.add(nuevo_boton)
         db.commit()
         db.refresh(nuevo_boton)
+        logger.info(f"[Botoneras] Botonera creada exitosamente | ID Interno: {nuevo_boton.id} | Serie: {botonera.serie} | Baño ID: {botonera.bathroom_id}")
         return nuevo_boton
         
     except Exception as e:
         db.rollback()
-        print(f"Error crítico en base de datos al crear botonera: {e}")
+        logger.error(f"[Botoneras] Error crítico en base de datos al crear botonera: {e}")
         # 2. Capturar cualquier fallo inesperado del motor (Error 500)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -118,6 +123,7 @@ def get_logs_by_client(db: Session, client_id: int):
     stmt = select(unified_query).order_by(desc(unified_query.c.fecha_hora))
     
     logs_crudos = db.execute(stmt).mappings().all()
+    logger.info(f"[Historial] Obteniendo logs unificados para Cliente ID: {client_id} | Registros devueltos: {len(logs_crudos)}")
     return [dict(log) for log in logs_crudos]
 
 
@@ -192,6 +198,7 @@ def editar_botonera(db: Session, button_box_id: int, datos_actualizar: dict):
     except Exception as e:
         db.rollback()
         print(f"Error crítico al editar botonera ID {button_box_id}: {e}")
+        logger.error(f"[Botoneras] Error crítico al editar botonera ID {button_box_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error interno al procesar la actualización en la base de datos."
@@ -218,6 +225,7 @@ def eliminar_botonera(db: Session, button_box_id: int):
         
         db.delete(botonera)
         db.commit()
+        logger.info(f"[Botoneras] Botonera eliminada exitosamente | ID Interno: {button_box_id} | Serie: {botonera.serie} | Baño ID: {botonera.bathroom_id}")
         return True
         
     except Exception as e:

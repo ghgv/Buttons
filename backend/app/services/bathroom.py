@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from app.models.models import Bathroom, Sede, Level
 from app.schemas.bathroom import BathroomCreate
-
+from app.core.logger import logger
 
 def create_bathroom(db: Session, bathroom_data: BathroomCreate):
     # Verificar que el level_id exista
