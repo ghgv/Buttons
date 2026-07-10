@@ -7,10 +7,19 @@ import type { SedeResponse } from "../types/sede.types";
 export const sedeService = {
   create: async (data: CreateSedeRequest): Promise<SedeResponse> => {
     try {
-      const { data: response } = await api.post<SedeResponse>("/sedes", data);
-      return response;
+      console.log("BASE URL:", api.defaults.baseURL);
+console.log("POST URL:", api.getUri({ url: "/sedes" }));
+      const  response  = await api.post<SedeResponse>("/sedes/", data);
+      console.log("BASE URL:", api.defaults.baseURL);
+console.log("REQUEST URL:", response.request.responseURL);
+console.log("STATUS:", response.status);
+console.log("DATA:", response.data);
+      return response.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
+        console.log("CONFIG:", error.config);
+        console.log("STATUS:", error.response?.status);
+        console.log("DATA:", error.response?.data);
         throw new Error(error.response.data?.detail || "Error al crear la sede");
       }
       throw new Error("No se pudo conectar con el servidor");

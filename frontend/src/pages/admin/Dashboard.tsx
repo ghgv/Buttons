@@ -410,7 +410,8 @@ export default function Dashboard() {
       // Mostrar dashboard normal con los datos en caché
       return renderDashboard();
     }
-    
+    console.log("clientes:", clientes);
+console.log("Array:", Array.isArray(clientes));
     // No hay datos, mostrar mensaje para seleccionar cliente
     return (
       <div className="p-4 max-w-7xl mx-auto space-y-6">

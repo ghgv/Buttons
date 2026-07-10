@@ -1,5 +1,5 @@
 // src/components/auth/AuthRightPanel.tsx
-import { Users, Activity, TrendingUp, ShieldCheck } from "lucide-react";
+import { Users, Activity, TrendingUp } from "lucide-react";
 
 interface AuthRightPanelProps {
   title?: string;

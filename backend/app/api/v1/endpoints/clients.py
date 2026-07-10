@@ -25,6 +25,20 @@ def obtener_clientes(
 ):
     return get_clients(db=db)
 
+
+@router.get("/locales")
+def obtener_clientes_locales(
+    db: Session = Depends(get_db),
+):
+    return get_clients(db=db)
+
+
+@router.get("/locales", status_code=status.HTTP_200_OK)
+def obtener_clientes_locales(
+    db: Session = Depends(get_db),
+):
+    return get_clients(db=db)
+
 @router.get("/{client_id}", status_code=status.HTTP_200_OK)
 def obtener_sedes_por_id_cliente(
     client_id: int,

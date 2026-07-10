@@ -17,17 +17,27 @@ export const clienteService = {
     }
   },
   
-  getAll: async (): Promise<ClienteResponse[]> => {
-    try {
-      const { data } = await api.get<ClienteResponse[]>("/clients");
-      return data;
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        throw new Error(error.response.data?.detail || "Error al recuperar la lista de clientes");
-      }
-      throw new Error("No se pudo conectar con el servidor");
+getAll: async (): Promise<ClienteResponse[]> => {
+  try {
+    const response = await api.get("/clients/");
+
+    console.log("========== CLIENTES ==========");
+    console.log("URL:", response.request.responseURL);
+    console.log("STATUS:", response.status);
+    console.log("CONTENT-TYPE:", response.headers["content-type"]);
+    console.log("DATA:", response.data);
+    console.log("ARRAY:", Array.isArray(response.data));
+
+    return response.data;
+  } catch (error) {
+    console.error("ERROR CLIENTES:", error);
+
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data?.detail || "Error al recuperar la lista de clientes");
     }
-  },
+    throw new Error("No se pudo conectar con el servidor");
+  }
+},
   
   getById: async (id: string): Promise<ClienteResponse> => {
     try {

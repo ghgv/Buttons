@@ -8,7 +8,13 @@ export const nubewareClienteService = {
   getAll: async (): Promise<NubewareClienteResponse[]> => {
     try {
       const { data } = await api.get<NubewareClienteListResponse>("/clients/locales");
-      console.log(data)
+      console.log(data);
+      console.log("========== CLIENTES ==========");
+    console.log(data);
+    console.log("typeof:", typeof data);
+    console.log("Array:", Array.isArray(data));
+    console.log("data.data:", (data as any).data);
+    console.log("Array data.data:", Array.isArray((data as any).data));
       return data.data || data || [];
 
     } catch (error) {
