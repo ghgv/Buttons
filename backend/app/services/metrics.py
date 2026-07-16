@@ -94,8 +94,10 @@ def metrics_by_id_client(db: Session, client_id: int):
         sedes_agrupadas[nombre_sede]["eventos"].append(evento_dict)
 
     # 6. Retornamos el JSON estructurado
+    
     return {
         "client_id": client_id,
+        "client_name": client.name,
         "resumen_infraestructura": {
             "total_sedes": total_sedes,
             "total_levels": total_levels,

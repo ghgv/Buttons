@@ -27,6 +27,7 @@ export interface SedeInfo {
 
 export interface DashboardMetricsResponse {
   client_id: number;
+  client_name: string;
   resumen_infraestructura: ResumenInfraestructura;
   total_eventos: number;
   sedes_info: SedeInfo[];
@@ -46,9 +47,10 @@ export const reporteService = {
       );
       
      
-      
+      console.log("data_client_name:", data.client_name);
       return {
         client_id: data.client_id,
+        client_name: data.client_name,
         resumen_infraestructura: data.resumen_infraestructura,
         total_eventos: data.total_eventos,
         sedes_info: data.sedes_info,

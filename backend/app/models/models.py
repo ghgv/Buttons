@@ -145,18 +145,35 @@ class Staff(Base):
 # =========================
 
 
+
+
 class Alert(Base):
-    __tablename__ = 'alerts'
+    __tablename__ = "alerts"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(255))
-    button_box_serie = Column(Integer, ForeignKey('button_box_1.serie'))
-    interaction_type = Column(String(255))
-    status = Column(Enum(AlertEnum), default=AlertEnum.pending)
-    create_time = Column(DateTime, nullable=False)
-    # Relación: Permite acceder al objeto ButtonBox1 desde una alerta
-    button_box = relationship("ButtonBox", backref="alerts")
 
+    name = Column(String(255))
+
+    button_box_id = Column(
+        Integer,
+        ForeignKey("button_box_1.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    interaction_type = Column(String(255))
+
+    status = Column(
+        Enum(AlertEnum),
+        default=AlertEnum.pending
+    )
+
+    create_time = Column(DateTime)
+
+    button_box = relationship(
+        "ButtonBox",
+        backref="alerts"
+    )
 
 class CounterLog(Base):
     __tablename__ = "counter_logs"
@@ -174,13 +191,52 @@ class ButtonLog(Base):
     __tablename__ = "button_logs"
 
     id = Column(Integer, primary_key=True)
-    button_box_id = Column(Integer, ForeignKey("button_box_1.id", ondelete="CASCADE"), index=True, nullable=True)
-    bathroom_id = Column(Integer, ForeignKey("bathrooms.id"), index=True, nullable=True)
+
+    button_box_id = Column(
+        Integer,
+        ForeignKey("button_box_1.id", ondelete="CASCADE"),
+        index=True,
+        nullable=True
+    )
+
+    bathroom_id = Column(
+        Integer,
+        ForeignKey("bathrooms.id"),
+        index=True,
+        nullable=True
+    )
+
     letter = Column(String(255), nullable=False)
+
     label = Column(String(255), nullable=False)
+
     create_time = Column(DateTime, nullable=False)
 
-    # Relaciones
-    # Asegúrate de que en tu modelo 'ButtonBox', el back_populates apunte a "logs"
-    button_box = relationship("ButtonBox", back_populates="logs")
+    status = Column(
+        Enum(AlertEnum),
+        default=AlertEnum.pending,
+        nullable=False
+    )
+
+    technician_comment = Column(
+        String(500),
+        nullable=True
+    )
+
+    resolved_time = Column(
+        DateTime,
+        nullable=True
+    )
+
+    resolved_by = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True
+    )
+
+    button_box = relationship(
+        "ButtonBox",
+        back_populates="logs"
+    )
+
     bathroom = relationship("Bathroom")

@@ -10,6 +10,8 @@ from app.api.v1.endpoints.levels import router as levels_router
 from app.api.v1.endpoints.bathrooms import route as bathroom_router
 from app.api.v1.endpoints import metrics
 from app.core.logger import logger
+from app.api.v1.endpoints.incidents import router as incidents_router
+
 
 app = FastAPI(
     title="API Contadores"
@@ -38,16 +40,7 @@ async def log_requests(request: Request, call_next):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-    "http://localhost:5173",
-    "http://localhost:5175",
-    "http://dali.com.co:5175",
-    "http://www.dali.com.co:5173",
-    "http://dali.com.co:5173",
-    "http://www.dali.com.co:5175",
-    "http://186.155.39.46:5173",
-    "http://186.155.39.46:5175",
-    ],
+    allow_origin_regex=r"http://localhost:\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,6 +54,7 @@ app.include_router(clients_router)
 app.include_router(sedes_router)
 app.include_router(levels_router)
 app.include_router(bathroom_router)
+app.include_router(incidents_router)
 
 @app.get("/prueba")
 def root():
@@ -73,6 +67,9 @@ def fake_env():
     return PlainTextResponse(
         "Fuck you, this is not the real .env file. Nice try! 😜",
     )
+#Para la app mobile
+
+
 
 
 

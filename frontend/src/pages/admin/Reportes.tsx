@@ -96,12 +96,12 @@ export default function Reportes() {
   const handleExportar = () => {
     if (!filteredEventos.length || !metrics?.resumen_infraestructura) return;
     
-    const selectedCliente = clientes.find(c => c.id === selectedClientId);
+    //const selectedCliente = clientes.find(c => c.id === selectedClientId);
     
     exportToExcel({
       eventos: filteredEventos,
       resumen: metrics.resumen_infraestructura,
-      clienteNombre: selectedCliente?.name || "Cliente",
+      clienteNombre: metrics.client_name || "Cliente",
       fechaInicio,
       fechaFin,
     });

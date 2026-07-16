@@ -5,7 +5,7 @@ from pydantic import BaseModel, EmailStr, Field
 from app.api.deps import get_db # <-- Importamos nuestra conexión
 from app.services.auth_service import create_user, authenticate_user
 from app.core.security import create_access_token
-
+from app.core.logger import logger
 router = APIRouter(prefix="/auth", tags=["Autenticación login y registro"])
 
 class UserRegister(BaseModel):
@@ -41,6 +41,7 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
 def login(credentials: UserLogin, db: Session = Depends(get_db)):
     # Pasamos la variable 'db' al servicio
     user = authenticate_user(db=db, email=credentials.email, password=credentials.password)
+    logger.info(f"[Usuarios] Intento de login para email: {credentials.email} | Usuario encontrado: {'Sí' if user else 'No'}")
     
     if not user:
         raise HTTPException(

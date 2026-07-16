@@ -43,12 +43,16 @@ def create_user(db: Session, client_id: int, name: str, email: str, password: st
 def authenticate_user(db: Session, email: str, password: str):
     # 1. Buscamos al usuario por correo y que esté activo
     user = db.query(User).filter(User.email == email, User.is_active == True).first()
-    
+    logger.info(f"[Usuarios] Intento de autenticación para email: {email} | Usuario encontrado: {'Sí' if user else 'No'}")
+    #logger.info(f"Hash almacenado: [{user.password_hash}] | Contraseña ingresada: [{password}]") if user else None
     if not user:
+        logger.warning(f"[Usuarios] Autenticación fallida para email: {email}")
         return None
         
     # 2. Verificamos que las contraseñas coincidan
     if not verify_password(password, user.password_hash):
+        logger.warning(f"[Usuarios] Autenticación fallida para email: {email}")
         return None
         
+    logger.info(f"[Usuarios] Autenticación exitosa para email: {email}")
     return user
