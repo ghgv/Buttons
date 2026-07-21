@@ -151,7 +151,7 @@ echo "  │       PUERTOS DE LA APLICACIÓN          │"
 echo "  └─────────────────────────────────────────┘"
 echo ""
 read -p "  Puerto Backend   [8000]: " APP_PORT
-APP_PORT=${APP_PORT:-80}
+APP_PORT=${APP_PORT:-8000}
 read -p "  Puerto Frontend  [5173]: " FRONTEND_PORT
 FRONTEND_PORT=${FRONTEND_PORT:-5173}
 echo ""
