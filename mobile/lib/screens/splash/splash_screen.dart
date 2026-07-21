@@ -31,6 +31,10 @@ class _SplashScreenState extends State<SplashScreen>{
 
     final token = await storage.getToken();
 
+    await Future.delayed(
+      const Duration(seconds: 2),
+    );
+
     if(!mounted) return;
 
     Navigator.pushReplacement(
@@ -56,15 +60,45 @@ class _SplashScreenState extends State<SplashScreen>{
   @override
   Widget build(BuildContext context){
 
-    return const Scaffold(
+      return Scaffold(
+  backgroundColor: const Color.fromARGB(255, 21, 69, 141),
 
-      body: Center(
+  body: Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
 
-        child: CircularProgressIndicator(),
+        Image.asset(
+          'assets/images/logo.png',
+          width: 180,
+          height: 180,
+        ),
 
-      ),
+        const SizedBox(height: 24),
 
-    );
+        const Text(
+          'Nubeware.ai',
+          style: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        const Text(
+          'Smart IoT Facilities',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.white70,
+          ),
+        ),
+
+      ],
+    ),
+  ),
+);
 
   }
 
