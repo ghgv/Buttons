@@ -29,6 +29,8 @@ import type { JSX } from "react/jsx-runtime";
 import ClientesNubeware from "../pages/nubeware/ClientesNubeware";
 import SubclientesNubeware from "../pages/nubeware/SubclientesNubeware";
 import Asignaciones from "../pages/admin/Asignaciones";
+import Supervisores from "../pages/admin/Supervisores";
+import Tecnicos from "../pages/admin/Tecnicos";
 
 // Componente para redirigir según el rol
 const RoleBasedRedirect = () => {
@@ -182,7 +184,27 @@ export default function RoutePrivate() {
             </PageRoleGuard>
           }
         />
-        <Route path="asignaciones" element={<Asignaciones />} />
+
+
+
+        <Route
+          path="supervisores"
+          element={
+            <PageRoleGuard allowedRoles={["client_admin"]}>
+              <Supervisores />
+            </PageRoleGuard>
+          }
+        />
+
+                <Route
+          path="tecnicos"
+          element={
+            <PageRoleGuard allowedRoles={["client_admin", "supervisor"]}>
+              <Tecnicos />
+            </PageRoleGuard>
+          }
+        />
+        
         <Route path="clientes/:clienteId/sedes/:sedeId/niveles/:nivelId/banos" element={<ClienteSedesNivelesBanios />} />
         <Route path="clientes/:clienteId/sedes/:sedeId/niveles" element={<ClienteSedesNiveles />} />
         <Route path="clientes/:clienteId/sedes" element={<ClienteSedes />} />

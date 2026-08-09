@@ -14,12 +14,14 @@ import {
   useGetAssignments,
   useCreateAssignment,
   useRemoveAssignment,
+
 } from "../../hooks/useAssignment";
 
 
 export default function Asignaciones() {
   const [bathroomId, setBathroomId] = useState<number | "">("");
   const [technicianId, setTechnicianId] = useState<number | "">("");
+  
 
   const {
     data: technicians = [],
@@ -38,6 +40,9 @@ export default function Asignaciones() {
 
   const createAssignment = useCreateAssignment();
   const removeAssignment = useRemoveAssignment();
+  
+
+  
 
   const handleAssign = () => {
     if (bathroomId === "" || technicianId === "") {
@@ -107,9 +112,10 @@ export default function Asignaciones() {
       {/* Nueva asignación */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
 
-        <h2 className="text-lg font-semibold text-gray-800 mb-5">
-          Nueva asignación
-        </h2>
+      <h2 className="text-lg font-semibold text-gray-800 mb-5">
+        Nueva asignación
+      </h2>  
+        
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 

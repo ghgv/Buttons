@@ -8,6 +8,7 @@ import { assignmentService } from "../services/assignment.service";
 
 import type {
   CreateAssignmentRequest,
+  UpdateTechnicianRequest,
 } from "../types/assignment.types";
 
 
@@ -64,6 +65,48 @@ export const useRemoveAssignment = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["bathroom-assignments"],
+      });
+    },
+  });
+};
+
+export const useCreateTechnician = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      name: string;
+      email: string;
+      password: string;
+    }) => assignmentService.createTechnician(data),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["assignment-technicians"],
+      });
+    },
+  });
+};
+
+export const useUpdateTechnician = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      technicianId,
+      data,
+    }: {
+      technicianId: number;
+      data: UpdateTechnicianRequest;
+    }) =>
+      assignmentService.updateTechnician(
+        technicianId,
+        data
+      ),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["assignment-technicians"],
       });
     },
   });

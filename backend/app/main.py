@@ -12,6 +12,7 @@ from app.api.v1.endpoints import metrics
 from app.core.logger import logger
 from app.api.v1.endpoints.incidents import router as incidents_router
 from app.api.v1.endpoints.assignments import router as assignments_router
+from app.api.v1.endpoints.supervisors import router as supervisors_router
 
 
 app = FastAPI(
@@ -63,6 +64,7 @@ app.include_router(levels_router)
 app.include_router(bathroom_router)
 app.include_router(incidents_router)
 app.include_router(assignments_router)
+app.include_router(supervisors_router)
 @app.get("/prueba")
 def root():
     return {

@@ -10,6 +10,7 @@ import {
   X,
   Route,
   ClipboardList,
+  UsersRound,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useState } from "react";
@@ -57,6 +58,19 @@ const adminMenuItems = [
     label: "Asignaciones",
     description: "Asignación de técnicos a baños"
   }
+  ,
+  {
+    path: "/admin/supervisores",
+    icon: UsersRound,
+    label: "Supervisores",
+    description: "Gestión de supervisores"
+  },
+  {
+    path: "/admin/tecnicos",
+    icon: UsersRound,
+    label: "Técnicos",
+    description: "Gestión de técnicos"
+  },
 ];
 
 const supervisorMenuItems = [
@@ -65,6 +79,12 @@ const supervisorMenuItems = [
     icon: ClipboardList,
     label: "Asignaciones",
     description: "Asignación de técnicos a baños"
+  },
+  {
+    path: "/admin/tecnicos",
+    icon: UsersRound,
+    label: "Técnicos",
+    description: "Gestión de técnicos"
   }
 ];
 

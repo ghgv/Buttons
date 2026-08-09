@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from pydantic import BaseModel, Field, EmailStr
+from app.services.auth_service import create_user
 
 from app.api.deps import (
     get_db,
@@ -33,6 +35,22 @@ class AssignmentCreate(BaseModel):
     bathroom_id: int = Field(gt=0)
     technician_id: int = Field(gt=0)
 
+class TechnicianCreate(BaseModel):
+    name: str = Field(
+        min_length=2,
+        max_length=100,
+        pattern=r"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$",
+    )
+    email: EmailStr
+    password: str = Field(min_length=6, max_length=128)
+
+class TechnicianUpdate(BaseModel):
+    name: str = Field(
+        min_length=2,
+        max_length=100,
+        pattern=r"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$",
+    )
+    email: EmailStr
 
 # =========================================================
 # FUNCIONES AUXILIARES
@@ -63,6 +81,50 @@ def get_bathroom_client_id(db: Session, bathroom_id: int):
 # TÉCNICOS DISPONIBLES
 # =========================================================
 
+@router.post(
+    "/technicians",
+    status_code=status.HTTP_201_CREATED,
+)
+def create_technician(
+    technician: TechnicianCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_assignment_manager),
+):
+    """
+    Crea un técnico para el mismo cliente del usuario
+    que administra las asignaciones.
+
+    El client_id se obtiene del JWT.
+    El rol siempre se fuerza a technician.
+    """
+
+    client_id = current_user["client_id"]
+
+    result = create_user(
+        db=db,
+        client_id=client_id,
+        name=technician.name.strip(),
+        email=str(technician.email),
+        password=technician.password,
+        role=UserRoleEnum.technician.value,
+    )
+
+    new_technician = (
+        db.query(User)
+        .filter(User.email == str(technician.email))
+        .first()
+    )
+
+    return {
+        "message": result["message"],
+        "technician": {
+            "id": new_technician.id,
+            "name": new_technician.name,
+            "email": new_technician.email,
+        },
+    }
+
+
 @router.get("/technicians")
 def get_technicians(
     db: Session = Depends(get_db),
@@ -91,6 +153,7 @@ def get_technicians(
             "id": technician.id,
             "name": technician.name,
             "email": technician.email,
+            "is_active": technician.is_active,
         }
         for technician in technicians
     ]
@@ -429,4 +492,71 @@ def remove_assignment(
 
     return {
         "message": "Asignación eliminada correctamente."
+    }
+
+@router.put("/technicians/{technician_id}")
+def update_technician(
+    technician_id: int,
+    data: TechnicianUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_assignment_manager),
+):
+    client_id = current_user["client_id"]
+
+    technician = (
+        db.query(User)
+        .filter(
+            User.id == technician_id,
+            User.client_id == client_id,
+            User.role == UserRoleEnum.technician,
+        )
+        .first()
+    )
+
+    if not technician:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Técnico no encontrado.",
+        )
+
+    new_email = str(data.email).strip().lower()
+
+    existing_user = (
+        db.query(User)
+        .filter(
+            User.email == new_email,
+            User.id != technician_id,
+        )
+        .first()
+    )
+
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El correo ya está registrado.",
+        )
+
+    technician.name = data.name.strip()
+    technician.email = new_email
+
+    try:
+        db.commit()
+        db.refresh(technician)
+
+    except Exception:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No fue posible actualizar el técnico.",
+        )
+
+    return {
+        "message": "Técnico actualizado correctamente.",
+        "technician": {
+            "id": technician.id,
+            "name": technician.name,
+            "email": technician.email,
+            "is_active": technician.is_active,
+        },
     }

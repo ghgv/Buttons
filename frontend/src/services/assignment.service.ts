@@ -5,6 +5,7 @@ import type {
   AssignmentBathroom,
   BathroomAssignment,
   CreateAssignmentRequest,
+  UpdateTechnicianRequest,
 } from "../types/assignment.types";
 
 export const assignmentService = {
@@ -31,6 +32,8 @@ export const assignmentService = {
     );
 
     return data;
+
+
   },
 
   createAssignment: async (
@@ -53,4 +56,31 @@ export const assignmentService = {
 
     return data;
   },
+
+  createTechnician: async (technician: {
+  name: string;
+  email: string;
+  password: string;
+}) => {
+  const { data } = await api.post(
+    "/bathroom-assignments/technicians",
+    technician
+  );
+
+  return data;
+
+},
+
+updateTechnician: async (
+  technicianId: number,
+  technician: UpdateTechnicianRequest
+) => {
+  const { data } = await api.put(
+    `/bathroom-assignments/technicians/${technicianId}`,
+    technician
+  );
+
+  return data;
+},
 };
+

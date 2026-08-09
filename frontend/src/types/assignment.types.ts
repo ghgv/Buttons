@@ -2,6 +2,12 @@ export interface Technician {
   id: number;
   name: string;
   email: string;
+  is_active: boolean;
+}
+
+export interface UpdateTechnicianRequest {
+  name: string;
+  email: string;
 }
 
 export interface AssignmentBathroom {
