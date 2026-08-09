@@ -28,6 +28,7 @@ import DashboardNubeware from "../pages/nubeware/DashboardNubeware";
 import type { JSX } from "react/jsx-runtime";
 import ClientesNubeware from "../pages/nubeware/ClientesNubeware";
 import SubclientesNubeware from "../pages/nubeware/SubclientesNubeware";
+import Asignaciones from "../pages/admin/Asignaciones";
 
 // Componente para redirigir según el rol
 const RoleBasedRedirect = () => {
@@ -42,14 +43,16 @@ const RoleBasedRedirect = () => {
     return <Navigate to="/login" replace />;
   }
 
-  if (user.role === 'client_admin') {
+  if (user.role === "client_admin") {
     return <Navigate to="/admin/dashboard" replace />;
-  } else if (user.role === 'coordinator') {
-    return <Navigate to="/coordinator/alertas" replace />;
+  } else if (user.role === "supervisor") {
+    return <Navigate to="/admin/asignaciones" replace />;
   } else if (user.role === "nubeware_admin") {
-      return <Navigate to="/nubeware/dashboard" replace />;
+    return <Navigate to="/nubeware/dashboard" replace />;
   }
+
   return <Navigate to="/login" replace />;
+  
 };
 
 // Componente para proteger rutas por rol
@@ -69,12 +72,36 @@ const RoleGuard = ({
   if (!allowedRoles.includes(user.role)) {
     if (user.role === 'client_admin') {
       return <Navigate to="/admin/dashboard" replace />;
-    } else if (user.role === 'coordinator') {
-      return <Navigate to="/coordinator/alertas" replace />;
+    } else if (user.role === 'supervisor') {
+      return <Navigate to="/admin/asignaciones" replace />;
     } else if (user.role === "nubeware_admin") {
       return <Navigate to="/nubeware/dashboard" replace />;
     }
     return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+const PageRoleGuard = ({
+  children,
+  allowedRoles,
+}: {
+  children: JSX.Element;
+  allowedRoles: string[];
+}) => {
+  const { user } = useAuth();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!allowedRoles.includes(user.role)) {
+    if (user.role === "supervisor") {
+      return <Navigate to="/admin/asignaciones" replace />;
+    }
+
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -95,17 +122,67 @@ export default function RoutePrivate() {
       <Route 
         path="/admin" 
         element={
-          <RoleGuard allowedRoles={['client_admin']}>
+          <RoleGuard allowedRoles={["client_admin", "supervisor"]}>
             <AdminLayout />
           </RoleGuard>
         }
       >
-        <Route index element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="alertas" element={<Alertas />} />
-        <Route path="clientes" element={<Clientes />} />
-        <Route path="reportes" element={<Reportes />} />
-        <Route path="trazabilidad" element={<Trazabilidad />} />
+        <Route index element={<RoleBasedRedirect />} />
+
+        <Route
+          path="dashboard"
+          element={
+            <PageRoleGuard allowedRoles={["client_admin"]}>
+              <Dashboard />
+            </PageRoleGuard>
+          }
+        />
+
+        <Route
+          path="alertas"
+          element={
+            <PageRoleGuard allowedRoles={["client_admin"]}>
+              <Alertas />
+            </PageRoleGuard>
+          }
+        />
+
+        <Route
+          path="clientes"
+          element={
+            <PageRoleGuard allowedRoles={["client_admin"]}>
+              <Clientes />
+            </PageRoleGuard>
+          }
+        />
+
+        <Route
+          path="reportes"
+          element={
+            <PageRoleGuard allowedRoles={["client_admin"]}>
+              <Reportes />
+            </PageRoleGuard>
+          }
+        />
+
+        <Route
+          path="trazabilidad"
+          element={
+            <PageRoleGuard allowedRoles={["client_admin"]}>
+              <Trazabilidad />
+            </PageRoleGuard>
+          }
+        />
+
+        <Route
+          path="asignaciones"
+          element={
+            <PageRoleGuard allowedRoles={["client_admin", "supervisor"]}>
+              <Asignaciones />
+            </PageRoleGuard>
+          }
+        />
+        <Route path="asignaciones" element={<Asignaciones />} />
         <Route path="clientes/:clienteId/sedes/:sedeId/niveles/:nivelId/banos" element={<ClienteSedesNivelesBanios />} />
         <Route path="clientes/:clienteId/sedes/:sedeId/niveles" element={<ClienteSedesNiveles />} />
         <Route path="clientes/:clienteId/sedes" element={<ClienteSedes />} />

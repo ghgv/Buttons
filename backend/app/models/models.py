@@ -1,7 +1,7 @@
 #contadores/app/models/models.py
 
 
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Enum, text
 from sqlalchemy.orm import relationship
 from app.core.database import Base 
 import enum
@@ -17,6 +17,7 @@ class UserRoleEnum(str, enum.Enum):
     nubeware_admin = "nubeware_admin"
     client_admin = "client_admin"
     supervisor = "supervisor"
+    technician = "technician"
 
 
 class AlertEnum (str, enum.Enum):
@@ -139,6 +140,60 @@ class Staff(Base):
     # Relaciones
     client = relationship("Client", back_populates="staff")
 
+
+class BathroomAssignment(Base):
+    __tablename__ = "bathroom_assignments"
+
+    id = Column(Integer, primary_key=True)
+
+    bathroom_id = Column(
+        Integer,
+        ForeignKey("bathrooms.id"),
+        nullable=False
+    )
+
+    technician_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    assigned_by = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    assigned_at = Column(
+        DateTime,
+        nullable=False,
+        server_default=text("CURRENT_TIMESTAMP")
+    )
+
+    unassigned_at = Column(
+        DateTime,
+        nullable=True
+    )
+
+    is_active = Column(
+        Boolean,
+        default=True,
+        nullable=False
+    )
+
+    bathroom = relationship(
+        "Bathroom"
+    )
+
+    technician = relationship(
+        "User",
+        foreign_keys=[technician_id]
+    )
+
+    assigner = relationship(
+        "User",
+        foreign_keys=[assigned_by]
+    )
 
 # =========================
 # MODELOS DE alertas y logs

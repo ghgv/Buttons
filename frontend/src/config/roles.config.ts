@@ -1,49 +1,63 @@
 // config/roles.config.ts
+
 export const ROLES = {
-  CLIENT_ADMIN: 'client_admin',
-  COORDINATOR: 'coordinator',
+  CLIENT_ADMIN: "client_admin",
+  SUPERVISOR: "supervisor",
+  NUBEWARE_ADMIN: "nubeware_admin",
+  TECHNICIAN: "technician",
 } as const;
 
 export type UserRole = typeof ROLES[keyof typeof ROLES];
 
-// Mapeo de roles a rutas
 export const ROLE_ROUTES: Record<UserRole, string> = {
-  [ROLES.CLIENT_ADMIN]: '/admin/dashboard',
-  [ROLES.COORDINATOR]: '/coordinator/alertas',
+  [ROLES.CLIENT_ADMIN]: "/admin/dashboard",
+  [ROLES.SUPERVISOR]: "/admin/asignaciones",
+  [ROLES.NUBEWARE_ADMIN]: "/nubeware/dashboard",
+  [ROLES.TECHNICIAN]: "/login",
 };
 
-// Mapeo de roles a nombres legibles
 export const ROLE_NAMES: Record<UserRole, string> = {
-  [ROLES.CLIENT_ADMIN]: 'Administrador',
-  [ROLES.COORDINATOR]: 'Coordinador',
+  [ROLES.CLIENT_ADMIN]: "Administrador",
+  [ROLES.SUPERVISOR]: "Supervisor",
+  [ROLES.NUBEWARE_ADMIN]: "Administrador Nubeware",
+  [ROLES.TECHNICIAN]: "Técnico",
 };
 
-// Mapeo de roles a layouts
 export const ROLE_LAYOUTS: Record<UserRole, string> = {
-  [ROLES.CLIENT_ADMIN]: 'AdminLayout',
-  [ROLES.COORDINATOR]: 'CoordinatorLayout',
+  [ROLES.CLIENT_ADMIN]: "AdminLayout",
+  [ROLES.SUPERVISOR]: "AdminLayout",
+  [ROLES.NUBEWARE_ADMIN]: "NubewareLayout",
+  [ROLES.TECHNICIAN]: "Mobile",
 };
 
-// Mapeo de roles a descripciones
 export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
-  [ROLES.CLIENT_ADMIN]: 'Acceso completo al sistema',
-  [ROLES.COORDINATOR]: 'Acceso limitado a alertas y tareas',
+  [ROLES.CLIENT_ADMIN]: "Acceso administrativo",
+  [ROLES.SUPERVISOR]: "Gestión de asignaciones",
+  [ROLES.NUBEWARE_ADMIN]: "Administración de Nubeware",
+  [ROLES.TECHNICIAN]: "Atención de incidentes asignados",
 };
 
-// Función para obtener la ruta de redirección según el rol
-export const getRedirectPath = (role: string | undefined): string => {
-  if (!role) return '/dashboard';
-  return ROLE_ROUTES[role as UserRole] || '/dashboard';
+export const getRedirectPath = (
+  role: string | undefined
+): string => {
+  if (!role) return "/login";
+
+  return ROLE_ROUTES[role as UserRole] || "/login";
 };
 
-// Función para obtener el nombre legible del rol
-export const getRoleName = (role: string | undefined): string => {
-  if (!role) return 'Usuario';
+export const getRoleName = (
+  role: string | undefined
+): string => {
+  if (!role) return "Usuario";
+
   return ROLE_NAMES[role as UserRole] || role;
 };
 
-// Función para verificar si un rol tiene acceso a una ruta
-export const hasRoleAccess = (role: string | undefined, allowedRoles: string[]): boolean => {
+export const hasRoleAccess = (
+  role: string | undefined,
+  allowedRoles: string[]
+): boolean => {
   if (!role) return false;
+
   return allowedRoles.includes(role);
 };

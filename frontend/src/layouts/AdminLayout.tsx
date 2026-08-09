@@ -8,7 +8,8 @@ import {
   Sheet,
   Menu,
   X,
-  Route
+  Route,
+  ClipboardList,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useState } from "react";
@@ -19,13 +20,58 @@ export default function AdminLayout() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const menuItems = [
-    { path: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard", description: "Visión general" },
-    { path: "/admin/alertas", icon: AlertTriangle, label: "Alertas", description: "Monitoreo de incidentes" },
-    { path: "/admin/clientes", icon: Building2, label: "Clientes", description: "Gestión de clientes" },
-    { path: "/admin/reportes", icon: Sheet, label: "Reportes", description: "Análisis y estadísticas" },
-    { path: "/admin/trazabilidad", icon: Route, label: "Trazabilidad", description: "Seguimiento y auditoría" }
-  ];
+const adminMenuItems = [
+  {
+    path: "/admin/dashboard",
+    icon: LayoutDashboard,
+    label: "Dashboard",
+    description: "Visión general"
+  },
+  {
+    path: "/admin/alertas",
+    icon: AlertTriangle,
+    label: "Alertas",
+    description: "Monitoreo de incidentes"
+  },
+  {
+    path: "/admin/clientes",
+    icon: Building2,
+    label: "Clientes",
+    description: "Gestión de clientes"
+  },
+  {
+    path: "/admin/reportes",
+    icon: Sheet,
+    label: "Reportes",
+    description: "Análisis y estadísticas"
+  },
+  {
+    path: "/admin/trazabilidad",
+    icon: Route,
+    label: "Trazabilidad",
+    description: "Seguimiento y auditoría"
+  },
+  {
+    path: "/admin/asignaciones",
+    icon: ClipboardList,
+    label: "Asignaciones",
+    description: "Asignación de técnicos a baños"
+  }
+];
+
+const supervisorMenuItems = [
+  {
+    path: "/admin/asignaciones",
+    icon: ClipboardList,
+    label: "Asignaciones",
+    description: "Asignación de técnicos a baños"
+  }
+];
+
+const menuItems =
+  user?.role === "supervisor"
+    ? supervisorMenuItems
+    : adminMenuItems;
 
   return (
     <div className="min-h-screen bg-gray-100">

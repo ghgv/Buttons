@@ -11,6 +11,7 @@ from app.api.v1.endpoints.bathrooms import route as bathroom_router
 from app.api.v1.endpoints import metrics
 from app.core.logger import logger
 from app.api.v1.endpoints.incidents import router as incidents_router
+from app.api.v1.endpoints.assignments import router as assignments_router
 
 
 app = FastAPI(
@@ -40,6 +41,12 @@ async def log_requests(request: Request, call_next):
 
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=[
+        "http://dali.com.co",
+        "https://dali.com.co",
+        "http://www.dali.com.co",
+        "https://www.dali.com.co",
+    ],
     allow_origin_regex=r"http://localhost:\d+",
     allow_credentials=True,
     allow_methods=["*"],
@@ -55,7 +62,7 @@ app.include_router(sedes_router)
 app.include_router(levels_router)
 app.include_router(bathroom_router)
 app.include_router(incidents_router)
-
+app.include_router(assignments_router)
 @app.get("/prueba")
 def root():
     return {
