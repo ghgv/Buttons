@@ -28,6 +28,7 @@ import DashboardNubeware from "../pages/nubeware/DashboardNubeware";
 import type { JSX } from "react/jsx-runtime";
 import ClientesNubeware from "../pages/nubeware/ClientesNubeware";
 import SubclientesNubeware from "../pages/nubeware/SubclientesNubeware";
+import Administradores from "../pages/nubeware/Administradores";
 import Asignaciones from "../pages/admin/Asignaciones";
 import Supervisores from "../pages/admin/Supervisores";
 import Tecnicos from "../pages/admin/Tecnicos";
@@ -237,7 +238,8 @@ export default function RoutePrivate() {
         <Route index element={<Navigate to="/nubeware/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardNubeware />} />
         <Route path="clientes" element={<ClientesNubeware />} />
-         <Route path="clientes/:clientLocalId/subclientes" element={<SubclientesNubeware />} />
+        <Route path="clientes/:clientLocalId/subclientes" element={<SubclientesNubeware />} />
+        <Route path="administradores" element={<Administradores />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

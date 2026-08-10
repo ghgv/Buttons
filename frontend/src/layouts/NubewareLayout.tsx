@@ -4,6 +4,7 @@ import {
   LayoutDashboard, 
   LogOut,
   Building2,
+  ShieldCheck,
   Menu,
   X
 } from "lucide-react";
@@ -17,10 +18,26 @@ export default function NubewareLayout() { // ✅ 1 'e'
   const [menuOpen, setMenuOpen] = useState(false);
 
   // ✅ Rutas con nubeware (1 'e')
-  const menuItems = [
-    { path: "/nubeware/dashboard", icon: LayoutDashboard, label: "Dashboard", description: "Visión general" },
-    { path: "/nubeware/clientes", icon: Building2, label: "Clientes", description: "Gestión de clientes" },
-  ];
+const menuItems = [
+  {
+    path: "/nubeware/dashboard",
+    icon: LayoutDashboard,
+    label: "Dashboard",
+    description: "Visión general"
+  },
+  {
+    path: "/nubeware/clientes",
+    icon: Building2,
+    label: "Clientes",
+    description: "Gestión de clientes"
+  },
+  {
+    path: "/nubeware/administradores",
+    icon: ShieldCheck,
+    label: "Administradores",
+    description: "Administradores de clientes"
+  },
+];
 
   return (
     <div className="min-h-screen bg-gray-100">

@@ -10,6 +10,14 @@ import { useAuth } from "./useAuth";
 // ... imports anteriores
 import { useGetSubclientesByClientLocalId } from "./useSubcliente";
 
+import {
+  useGetClientAdmins,
+  useCreateClientAdmin,
+  useUpdateClientAdmin,
+  useDeleteClientAdmin,
+} from "./useClientAdmin";
+
+
 // ✅ Importamos los hooks de Nubeware
 import { useGetNubewareClientes, useCreateNubewareCliente  } from "./useNubewareCliente";
 
@@ -19,5 +27,9 @@ export { useCreateCliente, useCreateSede, useGetSedesByClient, useCreateNivel, u
      // ✅ Exportamos los hooks de Nubeware
   useGetNubewareClientes,
   useCreateNubewareCliente,
-  useGetSubclientesByClientLocalId
+  useGetSubclientesByClientLocalId,
+  useGetClientAdmins,
+  useCreateClientAdmin,
+  useUpdateClientAdmin,
+  useDeleteClientAdmin,
  };
