@@ -3,17 +3,33 @@ import { useState } from "react";
 import { Mail, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import AuthRightPanel from "../../components/auth/AuthRightPanel";
+import { authService } from "../../services/auth.service";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Aquí iría la lógica de recuperación
-    console.log("Recuperar contraseña para:", email);
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  setIsPending(true);
+  setError("");
+
+  try {
+    await authService.forgotPassword(email);
     setSubmitted(true);
-  };
+  } catch (err) {
+    setError(
+      err instanceof Error
+        ? err.message
+        : "No fue posible solicitar la recuperación."
+    );
+  } finally {
+    setIsPending(false);
+  }
+};
 
   return (
     <div className="min-h-screen w-full flex bg-white font-sans text-slate-900 selection:bg-purple-200">
@@ -63,13 +79,20 @@ export default function ForgotPassword() {
                   />
                 </div>
               </div>
-
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-red-700 text-sm">
+                    {error}
+                  </p>
+                </div>
+              )}
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full py-3.5 px-4 bg-[#830AD1] hover:bg-purple-700 text-white font-bold rounded-full shadow-lg shadow-purple-100 transition-all text-sm tracking-wide"
+                  disabled={isPending}
+                  className="w-full py-3.5 px-4 bg-[#830AD1] hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold rounded-full shadow-lg shadow-purple-100 transition-all text-sm tracking-wide"
                 >
-                  Enviar Instrucciones
+                  {isPending ? "Enviando..." : "Enviar Instrucciones"}
                 </button>
               </div>
 
