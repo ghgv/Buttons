@@ -134,18 +134,10 @@ export default function Login() {
 
           </form>
 
-          {/* Mensaje de registro */}
-          <div className="text-center">
-            <p className="text-xs text-gray-500">
-              ¿No tienes una cuenta?{' '}
-              <Link to="/register" className="text-[#830AD1] hover:text-purple-700 font-semibold transition-colors">
-                Regístrate aquí
-              </Link>
-            </p>
-          </div>
+
 
           <p className="text-[11px] text-center text-gray-400">
-            Tecnología IoT de nubeware.ai - Control inteligente de baños
+            Tecnología IoT de nubeware.ai - Control inteligente de dispositivos y sensores para la gestión eficiente de recursos y procesos.
           </p>
         </div>
       </div>

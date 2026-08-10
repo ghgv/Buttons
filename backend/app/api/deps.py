@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 import jwt
-
+from typing import Optional
 from app.core.database import SessionLocal
 from app.core.security import SECRET_KEY, ALGORITHM
 
@@ -39,6 +39,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         user_id: int = payload.get("user_id")
         role: str = payload.get("role")
         client_id: int = payload.get("client_id")
+        tenant_id: Optional[int] = payload.get("tenant_id")
 
         if email is None:
             raise credentials_exception
@@ -47,7 +48,8 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
             "email": email,
             "user_id": user_id,
             "role": role,
-            "client_id": client_id
+            "client_id": client_id,
+            "tenant_id": tenant_id,
         }
 
     except jwt.ExpiredSignatureError:

@@ -5,7 +5,10 @@ from app.schemas.client import ClientCreate
 from app.core.logger import logger
 from app.schemas.client import ClientCreate, ClientUpdate
 
-def create_client(db: Session, client_data: ClientCreate):
+def create_client(
+    db: Session,
+    client_data: ClientCreate,
+    tenant_id: int | None = None,):
     """
     Recibe los datos validados, crea el objeto SQLAlchemy y lo guarda en la base de datos.
     """
@@ -29,7 +32,10 @@ def create_client(db: Session, client_data: ClientCreate):
         nit=client_data.nit,
         name=client_data.name,
         email=client_data.email,
-        address=client_data.address
+        address=client_data.address,
+        lat=client_data.lat,
+        lon=client_data.lon,
+        tenant_id=tenant_id,
     )
 
     try:

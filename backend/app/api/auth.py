@@ -129,7 +129,8 @@ def login(
             "sub": user.email,
             "user_id": user.id,
             "role": user_role_str,
-            "client_id": user.client_id
+            "client_id": user.client_id,
+            "tenant_id": user.tenant_id,
         }
     )
 
@@ -141,7 +142,8 @@ def login(
             "name": user.name,
             "email": user.email,
             "role": user_role_str,
-            "client_id": user.client_id
+            "client_id": user.client_id,
+            "tenant_id": user.tenant_id,
         }
     }
 

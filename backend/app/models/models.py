@@ -37,12 +37,17 @@ class Client(Base):
     address = Column(String(255), nullable=True)
     lat = Column(Float, nullable=True)
     lon = Column(Float, nullable=True)
-    
+
+    tenant_id = Column(
+        Integer,
+        nullable=True,
+        index=True,
+    )
+
     # Relaciones
     users = relationship("User", back_populates="client", cascade="all, delete")
     staff = relationship("Staff", back_populates="client", cascade="all, delete")
     sedes = relationship("Sede", back_populates="client", cascade="all, delete")
-
 
 class Sede(Base):
     __tablename__ = "sedes"
@@ -118,7 +123,19 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
-    client_id = Column(Integer, ForeignKey("clients.id", ondelete="CASCADE"), nullable=False)
+
+    client_id = Column(
+        Integer,
+        ForeignKey("clients.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    tenant_id = Column(
+        Integer,
+        nullable=True,
+        index=True,
+    )
+
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)

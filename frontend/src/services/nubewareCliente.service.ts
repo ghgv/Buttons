@@ -27,7 +27,7 @@ export const nubewareClienteService = {
 
   create: async (data: CreateNubewareClienteRequest): Promise<NubewareClienteResponse> => {
     try {
-      const { data: response } = await api.post<NubewareClienteResponse>("/clients/locales", data);
+      const { data: response } = await api.post<NubewareClienteResponse>("/clients/", data);
       return response;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
