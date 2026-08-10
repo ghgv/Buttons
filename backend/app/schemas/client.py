@@ -18,6 +18,19 @@ class ClientCreate(BaseModel):
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 
+class ClientUpdate(BaseModel):
+    nit: Optional[int] = None
+    name: Optional[str] = Field(
+        default=None,
+        min_length=2,
+        max_length=255,
+        pattern=r"^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.-]+$",
+    )
+    email: Optional[EmailStr] = None
+    address: Optional[str] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+
 class ClientCreate(BaseModel):
     nit: int = Field(None, description="NIT del cliente, opcional")
     name: str = Field(

@@ -3,6 +3,7 @@ from fastapi import HTTPException, status
 from app.models.models import Client
 from app.schemas.client import ClientCreate
 from app.core.logger import logger
+from app.schemas.client import ClientCreate, ClientUpdate
 
 def create_client(db: Session, client_data: ClientCreate):
     """
@@ -65,3 +66,123 @@ def get_sedes_by_client_id(db: Session, client_id: int):
         )
     return client.sedes  # Asumiendo que el modelo Client tiene una relación 'sedes' definida
     print ("Obteniendo sedes para el cliente con ID:", client.sedes)
+
+def update_client(
+    db: Session,
+    client_id: int,
+    client_data: ClientUpdate,
+):
+    client = (
+        db.query(Client)
+        .filter(Client.id == client_id)
+        .first()
+    )
+
+    if not client:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cliente no encontrado.",
+        )
+
+    # Comprobar email duplicado, excluyendo al propio cliente
+    if client_data.email is not None:
+        existing_email = (
+            db.query(Client)
+            .filter(
+                Client.email == client_data.email,
+                Client.id != client_id,
+            )
+            .first()
+        )
+
+        if existing_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ya existe otro cliente registrado con este correo electrónico.",
+            )
+
+    # Comprobar NIT duplicado, excluyendo al propio cliente
+    if client_data.nit is not None:
+        existing_nit = (
+            db.query(Client)
+            .filter(
+                Client.nit == client_data.nit,
+                Client.id != client_id,
+            )
+            .first()
+        )
+
+        if existing_nit:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ya existe otro cliente registrado con este NIT.",
+            )
+
+    update_data = client_data.model_dump(exclude_unset=True)
+
+    for field, value in update_data.items():
+        setattr(client, field, value)
+
+    try:
+        db.commit()
+        db.refresh(client)
+
+        logger.info(
+            f"[Clientes] Cliente actualizado | "
+            f"ID: {client.id} | Nombre: {client.name}"
+        )
+
+        return client
+
+    except Exception as e:
+        db.rollback()
+
+        logger.error(
+            f"[Clientes] Error actualizando cliente {client_id}: {e}"
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno al actualizar el cliente.",
+        )
+
+def delete_client(
+    db: Session,
+    client_id: int,
+):
+    client = (
+        db.query(Client)
+        .filter(Client.id == client_id)
+        .first()
+    )
+
+    if not client:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cliente no encontrado.",
+        )
+
+    try:
+        db.delete(client)
+        db.commit()
+
+        logger.info(
+            f"[Clientes] Cliente eliminado | "
+            f"ID: {client_id} | Nombre: {client.name}"
+        )
+
+        return {
+            "message": "Cliente eliminado correctamente."
+        }
+
+    except Exception as e:
+        db.rollback()
+
+        logger.error(
+            f"[Clientes] Error eliminando cliente {client_id}: {e}"
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno al eliminar el cliente.",
+        )

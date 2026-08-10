@@ -58,3 +58,63 @@ export const useGetSedesByCliente = (clientId: string) => {
     enabled: Boolean(clientId), // Cast explícito a booleano, más limpio y legible que !!
   });
 };
+
+export const useUpdateCliente = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ClienteResponse,
+    Error,
+    {
+      id: string;
+      data: Partial<CreateClienteRequest>;
+    }
+  >({
+    mutationFn: ({ id, data }) =>
+      clienteService.update(id, data),
+
+    onSuccess: () => {
+      toast.success("Cliente actualizado correctamente");
+
+      queryClient.invalidateQueries({
+        queryKey: ["clientes"],
+      });
+    },
+
+    onError: (error) => {
+      Swal.fire({
+        title: "Error al actualizar cliente",
+        text: error.message,
+        icon: "error",
+        confirmButtonColor: "#830AD1",
+      });
+    },
+  });
+};
+
+
+export const useDeleteCliente = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, string>({
+    mutationFn: (id) =>
+      clienteService.delete(id),
+
+    onSuccess: () => {
+      toast.success("Cliente eliminado correctamente");
+
+      queryClient.invalidateQueries({
+        queryKey: ["clientes"],
+      });
+    },
+
+    onError: (error) => {
+      Swal.fire({
+        title: "Error al eliminar cliente",
+        text: error.message,
+        icon: "error",
+        confirmButtonColor: "#830AD1",
+      });
+    },
+  });
+};

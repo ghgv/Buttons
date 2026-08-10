@@ -1,7 +1,17 @@
 import { useState, useMemo, useDeferredValue } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Plus, Building2, Edit, Trash2, ChevronRight, AlertCircle } from "lucide-react";
-import { useGetClientes, useCreateCliente } from "../../hooks";
+
+import Swal from "sweetalert2";
+import EditarClienteModal from "../../components/clientes/EditarClienteModal";
+
+import {
+  useGetClientes,
+  useCreateCliente,
+  useUpdateCliente,
+  useDeleteCliente,
+} from "../../hooks";
+
 import type { CreateClienteRequest } from "../../zod/cliente.zod";
 import CrearClienteModal from "../../components/clientes/CrearClienteModal";
 import Loading from "../../components/ui/Loading";
@@ -12,10 +22,15 @@ export default function Clientes() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const deferredSearchTerm = useDeferredValue(searchTerm); 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [clienteEditando, setClienteEditando] =
+  useState<ClienteResponse | null>(null);
 
   // Gracias al tipado de tu hook, 'clientes' se infiere de manera estricta y segura
   const { data: clientes = [], isLoading, isError, error } = useGetClientes();
   const { mutate: createCliente, isPending } = useCreateCliente();
+
+  const { mutate: updateCliente,    isPending: isUpdating,  } = useUpdateCliente();
+  const { mutate: deleteCliente,    isPending: isDeleting,  } = useDeleteCliente();
 
   // Memorizar el filtrado garantizando que no se procesen nulos o indefinidos
   const filteredClientes = useMemo<ClienteResponse[]>(() => {
@@ -38,6 +53,39 @@ export default function Clientes() {
       onSuccess: () => setIsModalOpen(false) 
     });
   };
+const handleUpdateCliente = (
+  id: string,
+  data: CreateClienteRequest
+) => {
+  updateCliente(
+    { id, data },
+    {
+      onSuccess: () => {
+        setClienteEditando(null);
+      },
+    }
+  );
+};
+
+const handleDeleteCliente = async (
+  cliente: ClienteResponse
+) => {
+  const result = await Swal.fire({
+    title: "¿Eliminar cliente?",
+    text: `Se eliminará "${cliente.name}". Esta acción no se puede deshacer.`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#dc2626",
+  });
+
+  if (!result.isConfirmed) {
+    return;
+  }
+
+  deleteCliente(String(cliente.id));
+};
 
   if (isLoading) return <Loading text="Cargando Clientes..." />;
 
@@ -135,10 +183,21 @@ export default function Clientes() {
                   </div>
 
                   <div className="flex items-center gap-1 sm:gap-2 ml-0 sm:ml-auto">
-                    <button className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Editar">
+                    <button
+                      type="button"
+                      onClick={() => setClienteEditando(cliente)}
+                      className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                      title="Editar"
+                    >
                       <Edit size={18} />
                     </button>
-                    <button className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCliente(cliente)}
+                      disabled={isDeleting}
+                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                      title="Eliminar"
+                    >
                       <Trash2 size={18} />
                     </button>
                     <button 
@@ -167,6 +226,13 @@ export default function Clientes() {
         onClose={() => setIsModalOpen(false)} 
         onCreate={handleCreateCliente} 
         isPending={isPending} 
+      />
+      <EditarClienteModal
+        isOpen={clienteEditando !== null}
+        onClose={() => setClienteEditando(null)}
+        cliente={clienteEditando}
+        onUpdate={handleUpdateCliente}
+        isPending={isUpdating}
       />
     </div>
   );

@@ -7,7 +7,7 @@ import type { ClienteResponse } from "../types/cliente.types";
 export const clienteService = {
   create: async (data: CreateClienteRequest): Promise<ClienteResponse> => {
     try {
-      const { data: response } = await api.post<ClienteResponse>("/clients", data);
+      const { data: response } = await api.post<ClienteResponse>("/clients/", data);
       return response;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
