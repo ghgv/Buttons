@@ -30,7 +30,7 @@ def metrics_by_id_client(db: Session, client_id: int):
     query = text("""
         SELECT * FROM (
             -- 1. MÓDULO DE CONTADORES (INGRESOS)
-            SELECT 
+            SELECT
                 cl.create_time AS fecha_hora,
                 s.name AS sede,
                 l.name AS nivel,
@@ -38,19 +38,33 @@ def metrics_by_id_client(db: Session, client_id: int):
                 c1.serie AS dispositivo_serie,
                 'ingreso' AS tipo_evento,
                 'flujo de personas' AS detalle_evento,
-                cl.amount AS valor
+                cl.amount AS valor,
+
+                NULL AS estado,
+                NULL AS comentario,
+                NULL AS fecha_atencion,
+                NULL AS resolved_by,
+                NULL AS tecnico,
+                NULL AS tecnico_email
+
             FROM counter_logs cl
-            LEFT JOIN counters_1 c1 ON cl.counter_id = c1.id
-            LEFT JOIN bathrooms b ON c1.bathroom_id = b.id
-            LEFT JOIN levels l ON b.level_id = l.id
-            LEFT JOIN sedes s ON l.sede_id = s.id
-            LEFT JOIN clients c ON s.client_id = c.id
+            LEFT JOIN counters_1 c1
+                ON cl.counter_id = c1.id
+            LEFT JOIN bathrooms b
+                ON c1.bathroom_id = b.id
+            LEFT JOIN levels l
+                ON b.level_id = l.id
+            LEFT JOIN sedes s
+                ON l.sede_id = s.id
+            LEFT JOIN clients c
+                ON s.client_id = c.id
+
             WHERE c.id = :client_id
 
             UNION ALL
 
             -- 2. MÓDULO DE BOTONERAS (ALERTAS)
-            SELECT 
+            SELECT
                 bl.create_time AS fecha_hora,
                 s.name AS sede,
                 l.name AS nivel,
@@ -58,15 +72,33 @@ def metrics_by_id_client(db: Session, client_id: int):
                 bb.serie AS dispositivo_serie,
                 'alerta' AS tipo_evento,
                 bl.label AS detalle_evento,
-                1 AS valor
+                1 AS valor,
+
+                bl.status AS estado,
+                bl.technician_comment AS comentario,
+                bl.resolved_time AS fecha_atencion,
+                bl.resolved_by AS resolved_by,
+                u.name AS tecnico,
+                u.email AS tecnico_email
+
             FROM button_logs bl
-            LEFT JOIN button_box_1 bb ON bl.button_box_id = bb.id
-            LEFT JOIN bathrooms b ON bb.bathroom_id = b.id
-            LEFT JOIN levels l ON b.level_id = l.id
-            LEFT JOIN sedes s ON l.sede_id = s.id
-            LEFT JOIN clients c ON s.client_id = c.id
+            LEFT JOIN button_box_1 bb
+                ON bl.button_box_id = bb.id
+            LEFT JOIN bathrooms b
+                ON bb.bathroom_id = b.id
+            LEFT JOIN levels l
+                ON b.level_id = l.id
+            LEFT JOIN sedes s
+                ON l.sede_id = s.id
+            LEFT JOIN clients c
+                ON s.client_id = c.id
+            LEFT JOIN users u
+                ON bl.resolved_by = u.id
+
             WHERE c.id = :client_id
+
         ) AS metricas_completas
+
         ORDER BY fecha_hora DESC;
     """)
 

@@ -48,6 +48,76 @@ export const exportToExcel = async ({ eventos, resumen, clienteNombre, fechaInic
   // Datos de resumen
   const totalIngresos = eventos.filter(e => e.tipo_evento === 'ingreso').reduce((acc, e) => acc + e.valor, 0);
   const totalAlertas = eventos.filter(e => e.tipo_evento === 'alerta').length;
+  const alertasPendientes = eventos.filter(
+  e => e.tipo_evento === 'alerta' && e.estado === 'pending'
+).length;
+
+const alertasResueltas = eventos.filter(
+  e => e.tipo_evento === 'alerta' && e.estado === 'resolved'
+).length;
+
+const alertasIgnoradas = eventos.filter(
+  e => e.tipo_evento === 'alerta' && e.estado === 'ignored'
+).length;
+
+
+// ================================
+// TIEMPO PROMEDIO DE ATENCIÓN
+// ================================
+
+const tiemposAtencion = eventos
+  .filter(
+    e =>
+      e.tipo_evento === 'alerta' &&
+      e.fecha_atencion
+  )
+  .map(e => {
+    const inicio = new Date(e.fecha_hora).getTime();
+    const fin = new Date(e.fecha_atencion!).getTime();
+
+    return fin - inicio;
+  })
+  .filter(ms => ms >= 0);
+
+
+const promedioMs =
+  tiemposAtencion.length > 0
+    ? tiemposAtencion.reduce((acc, ms) => acc + ms, 0) /
+      tiemposAtencion.length
+    : 0;
+
+
+const formatearDuracion = (ms: number): string => {
+  if (ms <= 0) {
+    return '0m';
+  }
+
+  const totalMinutos = Math.floor(ms / 60000);
+
+  const dias = Math.floor(totalMinutos / 1440);
+  const horas = Math.floor((totalMinutos % 1440) / 60);
+  const minutos = totalMinutos % 60;
+
+  const partes: string[] = [];
+
+  if (dias > 0) {
+    partes.push(`${dias}d`);
+  }
+
+  if (horas > 0 || dias > 0) {
+    partes.push(`${horas}h`);
+  }
+
+  partes.push(`${minutos}m`);
+
+  return partes.join(' ');
+};
+
+
+const tiempoPromedioAtencion =
+  tiemposAtencion.length > 0
+    ? formatearDuracion(promedioMs)
+    : 'Sin datos';
   
   const resumenData = [
     ['Cliente', clienteNombre],
@@ -59,6 +129,10 @@ export const exportToExcel = async ({ eventos, resumen, clienteNombre, fechaInic
     ['', ''],
     ['Total Ingresos', totalIngresos],
     ['Total Alertas', totalAlertas],
+    ['Alertas Pendientes', alertasPendientes],
+    ['Alertas Resueltas', alertasResueltas],
+    ['Alertas Ignoradas', alertasIgnoradas],
+    ['Tiempo Promedio Atención', tiempoPromedioAtencion],
   ];
   
   resumenData.forEach((row, idx) => {
@@ -105,37 +179,102 @@ export const exportToExcel = async ({ eventos, resumen, clienteNombre, fechaInic
     ingresosSheet.addRow(data);
   });
 
-  // ==================== HOJA 3: ALERTAS ====================
-  const alertasSheet = workbook.addWorksheet('Alertas');
-  
-  alertasSheet.columns = [
-    { header: 'Fecha', key: 'fecha', width: 20 },
-    { header: 'Sede', key: 'sede', width: 15 },
-    { header: 'Nivel', key: 'nivel', width: 15 },
-    { header: 'Género', key: 'genero', width: 12 },
-    { header: 'Alerta', key: 'alerta', width: 20 },
-  ];
-  
-  alertasSheet.getRow(1).font = { bold: true };
-  alertasSheet.getRow(1).fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FFF59E0B' },
-  };
-  
-  const alertasData = eventos
-    .filter(e => e.tipo_evento === 'alerta')
-    .map(e => ({
-      fecha: new Date(e.fecha_hora).toLocaleString(),
-      sede: e.sede,
-      nivel: e.nivel,
-      genero: getGeneroLabel(e.genero_bano),
-      alerta: getTipoAlertaLabel(e.detalle_evento),
-    }));
-  
-  alertasData.forEach(data => {
-    alertasSheet.addRow(data);
-  });
+// ==================== HOJA 3: ALERTAS ====================
+const alertasSheet = workbook.addWorksheet('Alertas');
+
+alertasSheet.columns = [
+  { header: 'Fecha alerta', key: 'fecha', width: 20 },
+  { header: 'Sede', key: 'sede', width: 18 },
+  { header: 'Nivel', key: 'nivel', width: 15 },
+  { header: 'Género', key: 'genero', width: 12 },
+  { header: 'Alerta', key: 'alerta', width: 22 },
+  { header: 'Estado', key: 'estado', width: 14 },
+  { header: 'Fecha atención', key: 'fechaAtencion', width: 20 },
+  { header: 'Tiempo atención', key: 'tiempoAtencion', width: 20 },
+  { header: 'Atendido por', key: 'tecnico', width: 28 },
+  { header: 'Email técnico', key: 'tecnicoEmail', width: 30 },
+  { header: 'Comentario', key: 'comentario', width: 45 },
+];
+
+alertasSheet.getRow(1).font = { bold: true };
+alertasSheet.getRow(1).fill = {
+  type: 'pattern',
+  pattern: 'solid',
+  fgColor: { argb: 'FFF59E0B' },
+};
+
+// Calcula el tiempo transcurrido entre creación y atención
+const calcularTiempoAtencion = (
+  fechaCreacion: string,
+  fechaAtencion: string | null
+): string => {
+  if (!fechaAtencion) {
+    return '';
+  }
+
+  const inicio = new Date(fechaCreacion);
+  const fin = new Date(fechaAtencion);
+
+  const diferenciaMs = fin.getTime() - inicio.getTime();
+
+  if (diferenciaMs < 0) {
+    return '';
+  }
+
+  const totalMinutos = Math.floor(diferenciaMs / 60000);
+
+  const dias = Math.floor(totalMinutos / 1440);
+  const horas = Math.floor((totalMinutos % 1440) / 60);
+  const minutos = totalMinutos % 60;
+
+  const partes: string[] = [];
+
+  if (dias > 0) {
+    partes.push(`${dias}d`);
+  }
+
+  if (horas > 0 || dias > 0) {
+    partes.push(`${horas}h`);
+  }
+
+  partes.push(`${minutos}m`);
+
+  return partes.join(' ');
+};
+
+const alertasData = eventos
+  .filter(e => e.tipo_evento === 'alerta')
+  .map(e => ({
+    fecha: new Date(e.fecha_hora).toLocaleString(),
+    sede: e.sede,
+    nivel: e.nivel,
+    genero: getGeneroLabel(e.genero_bano),
+    alerta: getTipoAlertaLabel(e.detalle_evento),
+
+    estado:
+      e.estado === 'resolved'
+        ? 'Resuelta'
+        : e.estado === 'ignored'
+        ? 'Ignorada'
+        : 'Pendiente',
+
+    fechaAtencion: e.fecha_atencion
+      ? new Date(e.fecha_atencion).toLocaleString()
+      : '',
+
+    tiempoAtencion: calcularTiempoAtencion(
+      e.fecha_hora,
+      e.fecha_atencion
+    ),
+
+    tecnico: e.tecnico || '',
+    tecnicoEmail: e.tecnico_email || '',
+    comentario: e.comentario || '',
+  }));
+
+alertasData.forEach(data => {
+  alertasSheet.addRow(data);
+});
 
   // ==================== HOJA 4: RESUMEN POR SEDE ====================
   const resumenSedeSheet = workbook.addWorksheet('Resumen por Sede');

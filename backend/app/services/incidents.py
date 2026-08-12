@@ -45,9 +45,9 @@ def get_pending_incidents(db: Session):
 def resolve_incident(
     db: Session,
     incident_id: int,
-    body
+    body,
+    user_id: int,
 ):
-
     log = (
         db.query(ButtonLog)
         .filter(ButtonLog.id == incident_id)
@@ -70,8 +70,17 @@ def resolve_incident(
     from datetime import datetime
     log.resolved_time = datetime.utcnow()
 
+    # Usuario autenticado que atendió la incidencia
+    log.resolved_by = user_id
+
     db.commit()
+    db.refresh(log)
 
     return {
-        "ok": True
+        "ok": True,
+        "incident_id": log.id,
+        "status": log.status,
+        "comment": log.technician_comment,
+        "resolved_time": log.resolved_time,
+        "resolved_by": log.resolved_by,
     }

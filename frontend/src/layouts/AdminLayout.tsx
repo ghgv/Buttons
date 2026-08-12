@@ -8,7 +8,6 @@ import {
   Sheet,
   Menu,
   X,
-  Route,
   ClipboardList,
   UsersRound,
 } from "lucide-react";
@@ -45,12 +44,6 @@ const adminMenuItems = [
     icon: Sheet,
     label: "Reportes",
     description: "Análisis y estadísticas"
-  },
-  {
-    path: "/admin/trazabilidad",
-    icon: Route,
-    label: "Trazabilidad",
-    description: "Seguimiento y auditoría"
   },
   {
     path: "/admin/asignaciones",

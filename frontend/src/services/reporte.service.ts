@@ -11,6 +11,14 @@ export interface EventoReporte {
   tipo_evento: "ingreso" | "alerta";
   detalle_evento: string;
   valor: number;
+
+  // Datos de atención de incidencias
+  estado: "pending" | "resolved" | "ignored" | null;
+  comentario: string | null;
+  fecha_atencion: string | null;
+  resolved_by: number | null;
+  tecnico: string | null;
+  tecnico_email: string | null;
 }
 
 export interface ResumenInfraestructura {
