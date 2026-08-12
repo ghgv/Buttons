@@ -608,7 +608,7 @@ class _IncidentScreenState
                       ElevatedButton.styleFrom(
 
                     backgroundColor:
-                        const Color.fromARGB(255, 68, 65, 147),
+                        const Color.fromARGB(255, 53, 51, 87),
 
                     foregroundColor:
                         Colors.white,

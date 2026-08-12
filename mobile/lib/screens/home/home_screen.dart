@@ -153,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   SizedBox(height: 6),
 
                   Text(
-                    "Conecting to server...",
+                    "Version 1.0.1",
                     style: TextStyle(
                       color: Colors.grey,
                     ),
