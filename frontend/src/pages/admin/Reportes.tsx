@@ -1,5 +1,5 @@
 // pages/dashboard/Reportes.tsx
-import { useState, useMemo } from "react";
+import { Fragment, useState, useMemo } from "react";
 import { Calendar, Filter, MapPin, ChevronDown, Building2, AlertTriangle } from "lucide-react";
 import { exportToExcel } from "../../utils/exportExcel";
 import { useGetClientes, useGetReporteMetrics } from "../../hooks";
@@ -50,6 +50,9 @@ export default function Reportes() {
   const [selectedSede, setSelectedSede] = useState<string>("");
   const [fechaInicio, setFechaInicio] = useState<string>("");
   const [fechaFin, setFechaFin] = useState<string>("");
+  const [tipoEvento, setTipoEvento] = useState<string>("");
+  const [eventoExpandido, setEventoExpandido] = useState<number | null>(null);
+
 
   const { data: clientes = [], isLoading: isLoadingClientes } = useGetClientes();
   const { data: metrics, isLoading, error, refetch } = useGetReporteMetrics(
@@ -75,7 +78,11 @@ export default function Reportes() {
     if (selectedSede) {
       eventos = eventos.filter(e => e.sede === selectedSede);
     }
-    
+    if (tipoEvento) {
+      eventos = eventos.filter(
+        e => e.tipo_evento === tipoEvento
+      );
+    }
     if (fechaInicio) {
       eventos = eventos.filter(e => new Date(e.fecha_hora) >= new Date(fechaInicio));
     }
@@ -85,7 +92,13 @@ export default function Reportes() {
     }
     
     return eventos.sort((a, b) => new Date(b.fecha_hora).getTime() - new Date(a.fecha_hora).getTime());
-  }, [metrics?.eventos, selectedSede, fechaInicio, fechaFin]);
+  }, [
+  metrics?.eventos,
+  selectedSede,
+  fechaInicio,
+  fechaFin,
+  tipoEvento
+]);
 
   const handleGenerar = () => {
     if (selectedClientId) {
@@ -137,6 +150,7 @@ export default function Reportes() {
                   setSelectedSede("");
                   setFechaInicio("");
                   setFechaFin("");
+                  setTipoEvento("");
                 }}
                 className="appearance-none w-full pl-10 pr-8 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 cursor-pointer text-gray-700"
               >
@@ -199,7 +213,30 @@ export default function Reportes() {
             </div>
           </div>
         </div>
+        {/* Tipo de evento */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Tipo de evento
+              </label>
 
+              <div className="relative">
+                <select
+                  value={tipoEvento}
+                  onChange={(e) => setTipoEvento(e.target.value)}
+                  disabled={!selectedClientId}
+                  className="appearance-none w-full px-3 pr-8 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 cursor-pointer text-gray-700 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
+                >
+                  <option value="">Todos</option>
+                  <option value="ingreso">Ingresos</option>
+                  <option value="alerta">Alertas</option>
+                </select>
+
+                <ChevronDown
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  size={16}
+                />
+              </div>
+            </div>
         {/* Botones */}
         <div className="flex flex-col sm:flex-row gap-3 mt-6">
           <button
@@ -284,11 +321,24 @@ export default function Reportes() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Baño</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Detalle</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredEventos.slice(0, 50).map((evento, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                  <Fragment key={idx}>
+                  <tr
+                        className={`hover:bg-gray-50 transition-colors ${
+                          evento.tipo_evento === "alerta" ? "cursor-pointer" : ""
+                        }`}
+                        onClick={() => {
+                          if (evento.tipo_evento === "alerta") {
+                            setEventoExpandido(
+                              eventoExpandido === idx ? null : idx
+                            );
+                          }
+                        }}
+                      >
                     <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
                       {new Date(evento.fecha_hora).toLocaleString()}
                     </td>
@@ -312,7 +362,90 @@ export default function Reportes() {
                         : getTipoAlertaLabel(evento.detalle_evento)
                       }
                     </td>
+                    <td className="px-4 py-3 text-sm">
+                        {evento.tipo_evento === "ingreso" ? (
+                          <span className="text-gray-400">
+                            —
+                          </span>
+                        ) : evento.estado === "resolved" ? (
+                          <span className="inline-flex items-center px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
+                            ✓ Resuelta
+                          </span>
+                        ) : evento.estado === "ignored" ? (
+                          <span className="inline-flex items-center px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">
+                            Ignorada
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">
+                            Pendiente
+                          </span>
+                        )}
+                      </td>
                   </tr>
+                  {evento.tipo_evento === "alerta" && eventoExpandido === idx && (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-4 bg-gray-50">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                          <div>
+                            <div className="text-xs font-medium text-gray-500 uppercase">
+                              Atendida por
+                            </div>
+                            <div className="mt-1 text-sm text-gray-900">
+                              {evento.tecnico || "Sin información"}
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="text-xs font-medium text-gray-500 uppercase">
+                              Fecha de atención
+                            </div>
+                            <div className="mt-1 text-sm text-gray-900">
+                              {evento.fecha_atencion
+                                ? new Date(evento.fecha_atencion).toLocaleString()
+                                : "Pendiente"}
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="text-xs font-medium text-gray-500 uppercase">
+                              Tiempo de atención
+                            </div>
+                            <div className="mt-1 text-sm text-gray-900">
+                              {evento.fecha_atencion
+                                ? (() => {
+                                    const inicio = new Date(evento.fecha_hora).getTime();
+                                    const fin = new Date(evento.fecha_atencion).getTime();
+
+                                    const minutos = Math.max(
+                                      0,
+                                      Math.floor((fin - inicio) / 60000)
+                                    );
+
+                                    const dias = Math.floor(minutos / 1440);
+                                    const horas = Math.floor((minutos % 1440) / 60);
+                                    const mins = minutos % 60;
+
+                                    return `${dias > 0 ? `${dias}d ` : ""}${horas}h ${mins}m`;
+                                  })()
+                                : "—"}
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="text-xs font-medium text-gray-500 uppercase">
+                              Comentario
+                            </div>
+                            <div className="mt-1 text-sm text-gray-900">
+                              {evento.comentario?.trim() || "Sin comentario"}
+                            </div>
+                          </div>
+
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
