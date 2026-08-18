@@ -91,27 +91,28 @@ def create_technician(
     current_user: dict = Depends(get_assignment_manager),
 ):
     """
-    Crea un técnico para el mismo cliente del usuario
-    que administra las asignaciones.
-
-    El client_id se obtiene del JWT.
-    El rol siempre se fuerza a technician.
+    Crea un técnico para el mismo cliente y tenant
+    del usuario que administra las asignaciones.
     """
 
     client_id = current_user["client_id"]
+    tenant_id = current_user.get("tenant_id")
 
     result = create_user(
         db=db,
         client_id=client_id,
+        tenant_id=tenant_id,
         name=technician.name.strip(),
-        email=str(technician.email),
+        email=str(technician.email).strip().lower(),
         password=technician.password,
         role=UserRoleEnum.technician.value,
     )
 
     new_technician = (
         db.query(User)
-        .filter(User.email == str(technician.email))
+        .filter(
+            User.email == str(technician.email).strip().lower()
+        )
         .first()
     )
 
@@ -121,9 +122,9 @@ def create_technician(
             "id": new_technician.id,
             "name": new_technician.name,
             "email": new_technician.email,
+            "is_active": new_technician.is_active,
         },
     }
-
 
 @router.get("/technicians")
 def get_technicians(

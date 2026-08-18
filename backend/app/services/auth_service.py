@@ -4,24 +4,26 @@ from app.models.models import User
 from app.core.security import get_password_hash, verify_password
 from app.core.logger import logger
 
-def create_user(db: Session, client_id: int, name: str, email: str, password: str, role: str):
-    # 1. Verificamos si el correo ya existe
-    existing_user = db.query(User).filter(User.email == email).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El correo ya está registrado."
-        )
+def create_user(
+    db: Session,
+    client_id: int,
+    name: str,
+    email: str,
+    password: str,
+    role: str,
+    tenant_id: int | None = None,
+    ):
 
     # 2. Encriptamos la contraseña y creamos el modelo
     hashed_pwd = get_password_hash(password)
     
     nuevo_usuario = User(
         client_id=client_id,
+        tenant_id=tenant_id,
         name=name,
         email=email,
         password_hash=hashed_pwd,
-        role=role
+        role=role,
     )
     
     try:

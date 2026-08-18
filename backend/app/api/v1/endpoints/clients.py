@@ -8,6 +8,7 @@ from app.api.deps import get_db, get_current_user
 
 from app.services.clients import (
     create_client,
+    create_tenant_client,
     get_clients,
     get_sedes_by_client_id,
     update_client,
@@ -25,6 +26,16 @@ def registrar_nuevo_cliente(
     role = current_user.get("role")
     tenant_id = current_user.get("tenant_id")
 
+    # Nubeware puede crear clientes globales.
+    # Estos clientes inicialmente no pertenecen a ningún tenant.
+    if role == "nubeware_admin":
+        return create_tenant_client(
+            db=db,
+            client_data=client_in,
+        )
+
+    # Un administrador de tenant solamente puede crear
+    # clientes dentro de su propio tenant.
     if role == "client_admin":
         if tenant_id is None:
             raise HTTPException(
@@ -40,8 +51,9 @@ def registrar_nuevo_cliente(
 
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
-        detail="Solo un administrador del tenant puede crear subclientes.",
+        detail="No tienes permisos para crear clientes.",
     )
+
 @router.get("/", status_code=status.HTTP_200_OK)
 def obtener_clientes(
     db: Session = Depends(get_db),

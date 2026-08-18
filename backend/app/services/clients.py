@@ -4,6 +4,7 @@ from app.models.models import Client
 from app.schemas.client import ClientCreate
 from app.core.logger import logger
 from app.schemas.client import ClientCreate, ClientUpdate
+from app.models.models import Client, Tenant
 
 def create_client(
     db: Session,
@@ -53,6 +54,104 @@ def create_client(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error interno al guardar el cliente: {str(e)}"
         )
+
+def create_tenant_client(
+    db: Session,
+    client_data: ClientCreate,
+):
+    """
+    Crea un tenant y su cliente principal en una sola transacción.
+    Esta operación está pensada para nubeware_admin.
+    """
+
+    # Validar email duplicado
+    if client_data.email:
+        existing_client = (
+            db.query(Client)
+            .filter(Client.email == client_data.email)
+            .first()
+        )
+
+        if existing_client:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ya existe un cliente registrado con este correo electrónico.",
+            )
+
+    # Validar NIT duplicado
+    if client_data.nit:
+        existing_nit = (
+            db.query(Client)
+            .filter(Client.nit == client_data.nit)
+            .first()
+        )
+
+        if existing_nit:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ya existe un cliente registrado con este NIT.",
+            )
+
+    try:
+        # 1. Crear tenant
+        new_tenant = Tenant(
+            name=client_data.name,
+            nit=str(client_data.nit) if client_data.nit is not None else None,
+            email=client_data.email,
+            address=client_data.address,
+        )
+
+        db.add(new_tenant)
+
+        # Ejecuta el INSERT sin hacer COMMIT.
+        # Así obtenemos new_tenant.id y seguimos dentro
+        # de la misma transacción.
+        db.flush()
+
+        # 2. Crear cliente principal del tenant
+        new_client = Client(
+            nit=client_data.nit,
+            name=client_data.name,
+            email=client_data.email,
+            address=client_data.address,
+            lat=client_data.lat,
+            lon=client_data.lon,
+            tenant_id=new_tenant.id,
+        )
+
+        db.add(new_client)
+
+        # 3. Confirmar ambas operaciones juntas
+        db.commit()
+
+        db.refresh(new_tenant)
+        db.refresh(new_client)
+
+        logger.info(
+            f"[Clientes] Tenant y cliente creados | "
+            f"Tenant ID: {new_tenant.id} | "
+            f"Client ID: {new_client.id} | "
+            f"Nombre: {client_data.name}"
+        )
+
+        return new_client
+
+    except HTTPException:
+        db.rollback()
+        raise
+
+    except Exception as e:
+        db.rollback()
+
+        logger.error(
+            f"[Clientes] Error creando tenant/cliente: {e}"
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno al crear tenant y cliente: {str(e)}",
+        )
+
 
 def get_clients(db: Session):
     """

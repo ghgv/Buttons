@@ -26,6 +26,22 @@ class AlertEnum (str, enum.Enum):
     resolved = "resolved"
     ignored = "ignored"
 
+class Tenant(Base):
+    __tablename__ = "tenants"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    nit = Column(String(50), nullable=True)
+    email = Column(String(255), nullable=True)
+    address = Column(String(255), nullable=True)
+    created_at = Column(
+        DateTime,
+        server_default=text("CURRENT_TIMESTAMP"),
+    )
+
+    # Relaciones
+    clients = relationship("Client", back_populates="tenant")
+    users = relationship("User", back_populates="tenant")
 
 class Client(Base):
     __tablename__ = "clients"
@@ -40,6 +56,7 @@ class Client(Base):
 
     tenant_id = Column(
         Integer,
+        ForeignKey("tenants.id"),
         nullable=True,
         index=True,
     )
@@ -48,6 +65,7 @@ class Client(Base):
     users = relationship("User", back_populates="client", cascade="all, delete")
     staff = relationship("Staff", back_populates="client", cascade="all, delete")
     sedes = relationship("Sede", back_populates="client", cascade="all, delete")
+    tenant = relationship("Tenant", back_populates="clients")
 
 class Sede(Base):
     __tablename__ = "sedes"
@@ -132,6 +150,7 @@ class User(Base):
 
     tenant_id = Column(
         Integer,
+        ForeignKey("tenants.id"),
         nullable=True,
         index=True,
     )
@@ -144,6 +163,7 @@ class User(Base):
 
     # Relaciones
     client = relationship("Client", back_populates="users")
+    tenant = relationship("Tenant", back_populates="users")
 
 class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"

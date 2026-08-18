@@ -103,6 +103,7 @@ def create_client_admin(
     result = create_user(
         db=db,
         client_id=data.client_id,
+        tenant_id=client.tenant_id,
         name=data.name.strip(),
         email=email,
         password=data.password,

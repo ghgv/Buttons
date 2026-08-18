@@ -107,12 +107,14 @@ def create_supervisor(
     current_user: dict = Depends(get_supervisor_admin),
 ):
     client_id = current_user["client_id"]
+    tenant_id = current_user.get("tenant_id")
 
     result = create_user(
         db=db,
         client_id=client_id,
+        tenant_id=tenant_id,
         name=supervisor.name.strip(),
-        email=str(supervisor.email),
+        email=str(supervisor.email).strip().lower(),
         password=supervisor.password,
         role=UserRoleEnum.supervisor.value,
     )
@@ -120,7 +122,7 @@ def create_supervisor(
     new_supervisor = (
         db.query(User)
         .filter(
-            User.email == str(supervisor.email)
+            User.email == str(supervisor.email).strip().lower()
         )
         .first()
     )
@@ -143,6 +145,7 @@ def update_supervisor(
     current_user: dict = Depends(get_supervisor_admin),
 ):
     client_id = current_user["client_id"]
+    
 
     # Buscar supervisor, limitado al cliente del administrador
     supervisor = (
