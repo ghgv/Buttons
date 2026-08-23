@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/incident_provider.dart';
+
+import '../../services/auth_service.dart';
 import '../../services/poll_service.dart';
 import '../../services/storage_service.dart';
 
 import '../incident/incident_screen.dart';
 import '../login/login_screen.dart';
+
 
 class HomeScreen extends StatefulWidget {
 
@@ -142,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   SizedBox(height: 16),
 
                   Text(
-                    "Buscando incidencias",
+                    "### Buscando incidencias ####",
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight:
@@ -153,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   SizedBox(height: 6),
 
                   Text(
-                    "Version 1.0.1",
+                    "Version 1.0.5+6",
                     style: TextStyle(
                       color: Colors.grey,
                     ),

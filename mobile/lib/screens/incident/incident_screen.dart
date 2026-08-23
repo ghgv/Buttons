@@ -392,7 +392,7 @@ class _IncidentScreenState
 
               const Text(
 
-                "Describe brevemente qué hiciste para atender la incidencia.",
+                "Hola. Describe brevemente qué hiciste para atender la incidencia.",
 
                 style: TextStyle(
                   color: Colors.grey,
