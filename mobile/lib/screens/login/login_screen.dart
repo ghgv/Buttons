@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../services/storage_service.dart';
 
+import '../../services/firebase_service.dart';
+import '../../services/device_service.dart';
+import '../../services/mobile_service.dart';
+
 import '../home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -60,19 +64,51 @@ class _LoginScreenState extends State<LoginScreen>{
 
     final storage = StorageService();
 
-    await storage.saveToken(token);
+await storage.saveToken(token);
 
-    Navigator.pushReplacement(
+// ------------------------------------
+// Actualizar el token FCM en el backend
+// ------------------------------------
 
-      context,
+try {
 
-      MaterialPageRoute(
+  final fcmToken = await FirebaseService.getToken();
 
-        builder: (_) => const HomeScreen(),
+  if (fcmToken != null) {
 
-      ),
+    final device = await DeviceService.getInfo();
+
+    await MobileService.registerDevice(
+
+      fcmToken: fcmToken,
+
+      device: device,
 
     );
+
+  }
+
+} catch (e) {
+
+  debugPrint("Error registrando dispositivo: $e");
+
+}
+
+// ------------------------------------
+
+if (!mounted) return;
+
+Navigator.pushReplacement(
+
+  context,
+
+  MaterialPageRoute(
+
+    builder: (_) => const HomeScreen(),
+
+  ),
+
+);
 
   }
 

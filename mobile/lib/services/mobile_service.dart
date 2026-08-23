@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 
 import 'storage_service.dart';
@@ -14,11 +13,22 @@ class MobileService {
 
   }) async {
 
+    print("========== REGISTER DEVICE ==========");
+
     final storage = StorageService();
 
     final jwt = await storage.getToken();
 
-    if (jwt == null) return;
+    print("JWT: $jwt");
+
+    if (jwt == null) {
+      print("JWT es NULL");
+      return;
+    }
+
+    print("FCM: $fcmToken");
+
+    print("DEVICE: $device");
 
     final url = Uri.parse(
       "https://dali.com.co/api/mobile/device",
@@ -38,26 +48,63 @@ class MobileService {
 
     };
 
-    final response = await http.post(
+    print("POST $url");
+    print(jsonEncode(body));
 
-      url,
+    try {
 
-      headers: {
+  print("ANTES DEL POST");
 
-        "Authorization": "Bearer $jwt",
+  final response = await http
+      .post(
+        url,
+        headers: {
+          "Authorization": "Bearer $jwt",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode(body),
+      )
+      .timeout(const Duration(seconds: 10));
 
-        "Content-Type": "application/json",
+  print("DESPUES DEL POST");
+  print(response.statusCode);
+  print(response.body);
 
-      },
+} catch (e, s) {
 
-      body: jsonEncode(body),
+  print("ERROR EN HTTP");
+  print(e);
+  print(s);
 
-    );
+}
 
-    print(response.statusCode);
+    try {
 
-    print(response.body);
+      final response = await http.post(
 
+        url,
+
+        headers: {
+
+          "Authorization": "Bearer $jwt",
+
+          "Content-Type": "application/json",
+
+        },
+
+        body: jsonEncode(body),
+
+      );
+
+      print("STATUS: ${response.statusCode}");
+      print("BODY: ${response.body}");
+
+    } catch (e, s) {
+
+      print("ERROR HTTP");
+      print(e);
+      print(s);
+
+    }
   }
-
 }
