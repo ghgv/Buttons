@@ -180,7 +180,9 @@ def update_client_admin(
             detail="El correo ya está registrado.",
         )
 
-    admin.client_id = data.client_id
+    admin.client_id = client.id
+    admin.tenant_id = client.tenant_id
+
     admin.name = data.name.strip()
     admin.email = new_email
 

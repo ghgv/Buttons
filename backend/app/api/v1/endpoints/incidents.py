@@ -25,8 +25,10 @@ def list_incidents(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    return get_pending_incidents(db)
-
+    return get_pending_incidents(
+        db=db,
+        current_user=current_user,
+    )
 
 @router.post("/{incident_id}/resolve")
 def close_incident(

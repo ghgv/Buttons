@@ -14,6 +14,9 @@ from app.api.v1.endpoints.incidents import router as incidents_router
 from app.api.v1.endpoints.assignments import router as assignments_router
 from app.api.v1.endpoints.supervisors import router as supervisors_router
 from app.api.v1.endpoints.client_admins import router as client_admins_router
+from app.api.v1.endpoints.mobile_devices import router as mobile_devices_router
+from app.api.v1.endpoints.test_push import router as test_push_router
+
 
 
 
@@ -68,6 +71,9 @@ app.include_router(incidents_router)
 app.include_router(assignments_router)
 app.include_router(supervisors_router)
 app.include_router(client_admins_router)
+app.include_router(mobile_devices_router)
+app.include_router(test_push_router)
+
 @app.get("/prueba")
 def root():
     return {

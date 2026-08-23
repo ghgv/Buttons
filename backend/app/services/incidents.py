@@ -1,16 +1,58 @@
 from sqlalchemy.orm import Session
+from app.core.logger import logger
 
-from app.models.models import ButtonLog
 
 
-def get_pending_incidents(db: Session):
+from app.models.models import (
+    ButtonLog,
+    Bathroom,
+    Level,
+    Sede,
+)
+
+from app.core.logger import logger
+
+def get_pending_incidents(
+    db: Session,
+    current_user: dict,
+):
+
+    logger.info(
+        f"INCIDENTS role={current_user['role']} "
+        f"client_id={current_user['client_id']}"
+    )
+
+    query = (
+        db.query(ButtonLog)
+        .join(
+            Bathroom,
+            ButtonLog.bathroom_id == Bathroom.id,
+        )
+        .join(
+            Level,
+            Bathroom.level_id == Level.id,
+        )
+        .join(
+            Sede,
+            Level.sede_id == Sede.id,
+        )
+        .filter(
+            ButtonLog.status == "pending",
+        )
+    )
+
+    if current_user["role"] != "nubeware_admin":
+        query = query.filter(
+            Sede.client_id == current_user["client_id"]
+        )
 
     logs = (
-        db.query(ButtonLog)
-        .filter(ButtonLog.status == "pending")
+        query
         .order_by(ButtonLog.create_time.desc())
         .all()
     )
+
+    logger.info(f"INCIDENTS encontrados={len(logs)}")
 
     result = []
 
@@ -22,25 +64,16 @@ def get_pending_incidents(db: Session):
         client = sede.client
 
         result.append({
-
             "id": log.id,
-
             "client": client.name,
-
             "floor": level.name,
-
             "bathroom": bathroom.name,
-
             "alert": log.label,
-
             "created_at": log.create_time,
-
-            "status": log.status
-
+            "status": log.status,
         })
 
     return result
-
 
 def resolve_incident(
     db: Session,

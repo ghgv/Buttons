@@ -124,6 +124,15 @@ def login(
     # IMPORTANTE:
     # user_id permitirá identificar inequívocamente
     # quién está realizando una asignación.
+    logger.info(
+    f"LOGIN -> user={user.email} "
+    f"user_id={user.id} "
+    f"client_id={user.client_id} "
+    f"tenant_id={user.tenant_id}"
+    )
+
+
+
     access_token = create_access_token(
         data={
             "sub": user.email,

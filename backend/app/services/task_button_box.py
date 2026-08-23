@@ -7,36 +7,189 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, literal, union_all, desc
 from fastapi import HTTPException, status
 from app.core.logger import logger
+from app.models.models import MobileDevice, User
+from app.services.firebase_notifications import send_to_token
 
-def tarea_guardar_botonera(serie: str, letter: str, label: str, valor: int):
+def tarea_guardar_botonera(
+    serie: str,
+    letter: str,
+    label: str,
+    valor: int,
+):
     db = SessionLocal()
+
     try:
-        create_time = datetime.now(ZoneInfo("America/Bogota"))
-        
-        dispositivo = db.query(ButtonBox).filter(ButtonBox.serie == int(serie)).first()
-        
-        if not dispositivo:
-            print(f"[Botonera] Error: No existe un dispositivo registrado con la serie {serie}")
-            logger.error(f"[Botonera] Error: No existe un dispositivo registrado con la serie {serie}")
-            return
-    
-        nuevo_log = ButtonLog(
-            button_box_id=dispositivo.id, 
-            bathroom_id=dispositivo.bathroom_id, 
-            letter=letter,
-            label=label,
-            create_time=create_time
+
+        create_time = datetime.now(
+            ZoneInfo("America/Bogota")
         )
-        
+
+        # ======================================================
+        # Buscar la botonera
+        # ======================================================
+
+        button_box = (
+            db.query(ButtonBox)
+            .filter(
+                ButtonBox.serie == int(serie)
+            )
+            .first()
+        )
+
+        if not button_box:
+
+            logger.error(
+                f"[Botonera] No existe una botonera con serie {serie}"
+            )
+
+            return
+
+        # ======================================================
+        # Crear incidencia
+        # ======================================================
+
+        nuevo_log = ButtonLog(
+
+            button_box_id=button_box.id,
+
+            bathroom_id=button_box.bathroom_id,
+
+            letter=letter,
+
+            label=label,
+
+            create_time=create_time,
+
+        )
+
         db.add(nuevo_log)
+
         db.commit()
-        print(f"✅ Registro guardado en 'button_logs' | ID Box: {dispositivo.id} | ID Baño: {dispositivo.bathroom_id} | Letra: {letter}")
-        logger.info(f"[Botonera] Registro guardado en 'button_logs' | ID Box: {dispositivo.id} | ID Baño: {dispositivo.bathroom_id} | Letra: {letter}")
+
+        db.refresh(nuevo_log)
+
+        logger.info(
+            f"[Botonera] Nueva incidencia "
+            f"id={nuevo_log.id} "
+            f"box={button_box.id}"
+        )
+
+        # ======================================================
+        # Buscar supervisores
+        # (más adelante filtraremos por cliente)
+        # ======================================================
+
+        supervisores = (
+
+            db.query(User)
+
+            .filter(
+
+                User.role == "supervisor",
+
+                User.is_active == True,
+
+            )
+
+            .all()
+
+        )
+
+        logger.info(
+            f"[PUSH] Supervisores encontrados: {len(supervisores)}"
+        )
+
+        # ======================================================
+        # Enviar PUSH
+        # ======================================================
+
+        for supervisor in supervisores:
+
+            mobile_device = (
+
+                db.query(MobileDevice)
+
+                .filter(
+
+                    MobileDevice.user_id == supervisor.id,
+
+                    MobileDevice.active == True,
+
+                )
+
+                .first()
+
+            )
+
+            if not mobile_device:
+
+                logger.info(
+                    f"[PUSH] Supervisor {supervisor.id} sin dispositivo"
+                )
+
+                continue
+
+            logger.info(
+                f"[PUSH] Enviando a "
+                f"user={supervisor.id} "
+                f"token={mobile_device.fcm_token[:25]}..."
+            )
+
+            try:
+
+                message_id = send_to_token(
+
+                    token=mobile_device.fcm_token,
+
+                    title="🚨 Nueva incidencia",
+
+                    body=f"{label} - Botón {letter}",
+
+                    data={
+
+                        "type": "incident",
+
+                        "incident_id": str(nuevo_log.id),
+
+                        "button_box_id": str(button_box.id),
+
+                        "bathroom_id": str(button_box.bathroom_id),
+
+                        "label": label,
+
+                        "letter": letter,
+
+                    },
+
+                )
+
+                logger.info(
+                    f"[PUSH] Firebase OK: {message_id}"
+                )
+
+            except Exception as e:
+
+                logger.exception(
+                    f"[PUSH] Error enviando push: {e}"
+                )
+
+        logger.info(
+            f"[Botonera] Registro guardado "
+            f"Box={button_box.id} "
+            f"Baño={button_box.bathroom_id} "
+            f"Letra={letter}"
+        )
+
     except Exception as e:
+
         db.rollback()
-        print(f"❌ Error crítico al guardar el log de la botonera Serie {serie}: {e}")
-        logger.error(f"[Botonera] Error crítico al guardar el log de la botonera Serie {serie}: {e}")
+
+        logger.exception(
+            f"[Botonera] Error crítico serie={serie}: {e}"
+        )
+
     finally:
+
         db.close()
 
 def crear_botonera(db: Session, botonera: ButtonBoxCreate):

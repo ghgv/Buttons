@@ -8,6 +8,7 @@ import enum
 from datetime import datetime
 
 
+
 class GenderEnum(str, enum.Enum):
     men = "men"
     women = "women"
@@ -164,6 +165,68 @@ class User(Base):
     # Relaciones
     client = relationship("Client", back_populates="users")
     tenant = relationship("Tenant", back_populates="users")
+
+
+class MobileDevice(Base):
+    __tablename__ = "mobile_devices"
+
+    id = Column(Integer, primary_key=True)
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    fcm_token = Column(
+        String(512),
+        nullable=False,
+    )
+
+    platform = Column(
+        String(20),
+        nullable=False,
+    )
+
+    app_version = Column(
+        String(30),
+        nullable=True,
+    )
+
+    model = Column(
+        String(80),
+        nullable=True,
+    )
+
+    android_version = Column(
+        String(40),
+        nullable=True,
+    )
+
+    active = Column(
+        Boolean,
+        default=True,
+    )
+
+    last_seen = Column(
+        DateTime,
+        server_default=text("CURRENT_TIMESTAMP"),
+    )
+
+    created_at = Column(
+        DateTime,
+        server_default=text("CURRENT_TIMESTAMP"),
+    )
+
+    updated_at = Column(
+        DateTime,
+        server_default=text("CURRENT_TIMESTAMP"),
+        onupdate=datetime.utcnow,
+    )
+
+    user = relationship("User")
+
 
 class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
@@ -367,3 +430,5 @@ class ButtonLog(Base):
     )
 
     bathroom = relationship("Bathroom")
+
+
