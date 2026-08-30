@@ -27,3 +27,22 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// Interceptor global para detectar sesiones expiradas
+api.interceptors.response.use(
+  (response) => response,
+
+  (error) => {
+    if (error.response?.status === 401) {
+      // Limpiar usuario/token del store
+      useAuthStore.getState().logout();
+
+      // Evitar bucle si ya estamos en login
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
