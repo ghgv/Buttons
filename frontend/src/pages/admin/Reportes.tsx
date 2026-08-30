@@ -1,6 +1,6 @@
 // pages/dashboard/Reportes.tsx
 import { Fragment, useState, useMemo } from "react";
-import { Calendar, Filter, MapPin, ChevronDown, Building2, AlertTriangle } from "lucide-react";
+import { Calendar,  MapPin, ChevronDown, Building2, AlertTriangle } from "lucide-react";
 import { exportToExcel } from "../../utils/exportExcel";
 import { useGetClientes, useGetReporteMetrics } from "../../hooks";
 
@@ -84,11 +84,19 @@ export default function Reportes() {
       );
     }
     if (fechaInicio) {
-      eventos = eventos.filter(e => new Date(e.fecha_hora) >= new Date(fechaInicio));
+      const inicio = new Date(`${fechaInicio}T00:00:00`);
+
+      eventos = eventos.filter(
+        e => new Date(e.fecha_hora) >= inicio
+      );
     }
-    
+
     if (fechaFin) {
-      eventos = eventos.filter(e => new Date(e.fecha_hora) <= new Date(fechaFin));
+      const fin = new Date(`${fechaFin}T23:59:59.999`);
+
+      eventos = eventos.filter(
+        e => new Date(e.fecha_hora) <= fin
+      );
     }
     
     return eventos.sort((a, b) => new Date(b.fecha_hora).getTime() - new Date(a.fecha_hora).getTime());
@@ -239,14 +247,7 @@ export default function Reportes() {
             </div>
         {/* Botones */}
         <div className="flex flex-col sm:flex-row gap-3 mt-6">
-          <button
-            onClick={handleGenerar}
-            disabled={!selectedClientId || isLoading}
-            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Filter size={18} />
-            {isLoading ? "Cargando..." : "Generar reporte"}
-          </button>
+
           
           <button
             onClick={handleExportar}

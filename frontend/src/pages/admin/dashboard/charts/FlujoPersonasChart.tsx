@@ -2,11 +2,17 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts";
 import { AreaChart as AreaChartIcon } from "lucide-react";
 
+
+
+
 interface FlujoPersonasChartProps {
   data: Array<{ name: string; personas: number }>;
   selectedSedes: string[];
   fechaInicio: string;
   fechaFin: string;
+
+  vista: "dia" | "hora";
+  onVistaChange: (vista: "dia" | "hora") => void;
 }
 
 export default function FlujoPersonasChart({
@@ -14,6 +20,8 @@ export default function FlujoPersonasChart({
   selectedSedes,
   fechaInicio,
   fechaFin,
+  vista,
+  onVistaChange,
 }: FlujoPersonasChartProps) {
   const getSedesText = () => {
     if (selectedSedes.length === 0) return 'Ninguna sede';
@@ -72,11 +80,45 @@ export default function FlujoPersonasChart({
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Flujo de Personas</h3>
           <p className="text-sm text-gray-500">
-            {selectedSedes.length > 0 ? `Sedes: ${getSedesText()}` : 'Ingresos diarios'}
+            {selectedSedes.length > 0
+              ? `Sedes: ${getSedesText()}`
+              : vista === "hora"
+                ? "Ingresos por hora"
+                : "Ingresos diarios"}
             {fechaInicio && fechaFin && ` (${fechaInicio} al ${fechaFin})`}
           </p>
         </div>
-        <AreaChartIcon size={20} className="text-gray-400" />
+        <div className="flex items-center gap-3">
+
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            <button
+              type="button"
+              onClick={() => onVistaChange("dia")}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition ${
+                vista === "dia"
+                  ? "bg-white text-cyan-600 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Por día
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onVistaChange("hora")}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition ${
+                vista === "hora"
+                  ? "bg-white text-cyan-600 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Por hora
+            </button>
+          </div>
+
+          <AreaChartIcon size={20} className="text-gray-400" />
+
+        </div>
       </div>
       {data.length === 0 ? (
         <div className="flex items-center justify-center h-64 text-gray-400">
@@ -107,6 +149,7 @@ export default function FlujoPersonasChart({
               stroke="#9ca3af"
               tick={{ fontSize: 11 }}
               dy={5} // ✅ Separación de los ticks
+              interval={vista === "hora" ? 1 : 0}
             />
             
             {/* ✅ YAxis con dominio dinámico para dar espacio arriba */}
