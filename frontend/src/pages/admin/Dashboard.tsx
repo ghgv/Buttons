@@ -305,7 +305,7 @@ export default function Dashboard() {
            * La corrección /2 se aplica específicamente
            * al gráfico "Flujo de Personas".
            */
-          ingresos: data.ingresos,
+          ingresos: Math.round(data.ingresos / 2),
 
           alertas: data.alertas
         };
@@ -455,7 +455,7 @@ export default function Dashboard() {
 
       .map(([name, value]) => ({
         name,
-        value
+        value: Math.round(value / 2)
       }));
   };
 
