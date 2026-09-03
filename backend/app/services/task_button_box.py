@@ -75,28 +75,75 @@ def tarea_guardar_botonera(
         )
 
         # ======================================================
-        # Buscar supervisores
-        # (más adelante filtraremos por cliente)
+        # Determinar cliente y tenant de la botonera
+        #
+        # ButtonBox -> Bathroom -> Level -> Sede -> Client
+        # ======================================================
+
+        contexto = (
+            db.query(
+                Sede.client_id,
+                Client.tenant_id,
+            )
+            .join(
+                Level,
+                Level.sede_id == Sede.id,
+            )
+            .join(
+                Bathroom,
+                Bathroom.level_id == Level.id,
+            )
+            .join(
+                Client,
+                Client.id == Sede.client_id,
+            )
+            .filter(
+                Bathroom.id == button_box.bathroom_id
+            )
+            .first()
+        )
+
+        if not contexto:
+
+            logger.error(
+                f"[PUSH] No se pudo determinar cliente/tenant "
+                f"para bathroom_id={button_box.bathroom_id}"
+            )
+
+            return
+
+
+        client_id = contexto.client_id
+        tenant_id = contexto.tenant_id
+
+
+        logger.info(
+            f"[PUSH] Incidencia pertenece a "
+            f"client_id={client_id} tenant_id={tenant_id}"
+        )
+
+
+        # ======================================================
+        # Buscar SOLO supervisores del mismo cliente y tenant
         # ======================================================
 
         supervisores = (
-
             db.query(User)
-
             .filter(
-
                 User.role == "supervisor",
-
                 User.is_active == True,
-
+                User.client_id == client_id,
+                User.tenant_id == tenant_id,
             )
-
             .all()
-
         )
 
+
         logger.info(
-            f"[PUSH] Supervisores encontrados: {len(supervisores)}"
+            f"[PUSH] Supervisores encontrados "
+            f"client_id={client_id} "
+            f"tenant_id={tenant_id}: "
+            f"{len(supervisores)}"
         )
 
         # ======================================================
