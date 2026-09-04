@@ -1146,50 +1146,30 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-          <FlujoPersonasChart
-            data={flujoPersonas}
-            selectedSedes={
-              selectedSedes
-            }
-            fechaInicio={
-              fechaInicio
-            }
-            fechaFin={
-              fechaFin
-            }
-            vista={
-              vistaFlujo
-            }
-            onVistaChange={
-              setVistaFlujo
-            }
-          />
+  <FlujoPersonasChart
+    data={flujoPersonas}
+    selectedSedes={selectedSedes}
+    fechaInicio={fechaInicio}
+    fechaFin={fechaFin}
+    vista={vistaFlujo}
+    onVistaChange={setVistaFlujo}
+  />
 
-          <AlertasPorSedeChart
-            data={
-              sedesOBanosAlertasData
-            }
-            selectedSedes={
-              selectedSedes
-            }
-          />
+  <UsoGeneroChart
+    data={usoPorGenero}
+  />
 
-          <EventosDiariosChart
-            data={
-              eventosPorDia
-            }
-            selectedSedes={
-              selectedSedes
-            }
-          />
+  <EventosDiariosChart
+    data={eventosPorDia}
+    selectedSedes={selectedSedes}
+  />
 
-          <UsoGeneroChart
-            data={
-              usoPorGenero
-            }
-          />
+  <AlertasPorSedeChart
+    data={sedesOBanosAlertasData}
+    selectedSedes={selectedSedes}
+  />
 
-        </div>
+</div>
 
         <AlertasPorDiaChart
           data={
