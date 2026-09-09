@@ -46,7 +46,8 @@ export const exportToExcel = async ({ eventos, resumen, clienteNombre, fechaInic
   resumenSheet.getCell('A1').alignment = { horizontal: 'center' };
   
   // Datos de resumen
-  const totalIngresos = eventos.filter(e => e.tipo_evento === 'ingreso').reduce((acc, e) => acc + e.valor, 0);
+  //const totalIngresos = eventos.filter(e => e.tipo_evento === 'ingreso').reduce((acc, e) => acc + e.valor, 0);
+  const totalIngresos = eventos.filter(e => e.tipo_evento === 'ingreso').reduce((acc, e) => acc + e.valor, 0) / 2;
   const totalAlertas = eventos.filter(e => e.tipo_evento === 'alerta').length;
   const alertasPendientes = eventos.filter(
   e => e.tipo_evento === 'alerta' && e.estado === 'pending'
@@ -172,7 +173,7 @@ const tiempoPromedioAtencion =
       sede: e.sede,
       nivel: e.nivel,
       genero: getGeneroLabel(e.genero_bano),
-      personas: e.valor,
+      personas: e.valor/2,
     }));
   
   ingresosData.forEach(data => {
@@ -287,7 +288,7 @@ alertasData.forEach(data => {
     }
     const stats = sedeStats.get(e.sede)!;
     if (e.tipo_evento === 'ingreso') {
-      stats.ingresos += e.valor;
+      stats.ingresos += e.valor/2;
     } else {
       stats.alertas += 1;
     }
