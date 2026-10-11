@@ -4,10 +4,17 @@ export interface EventoDashboard {
   sede: string;
   nivel: string;
   genero_bano: string;
-  dispositivo_serie: number;
+  dispositivo_serie: number | string;
   tipo_evento: "ingreso" | "alerta";
   detalle_evento: string;
   valor: number;
+
+  estado: string | null;
+  comentario: string | null;
+  fecha_atencion: string | null;
+  resolved_by: number | null;
+  tecnico: string | null;
+  tecnico_email: string | null;
 }
 
 export interface SedeInfo {
@@ -28,3 +35,4 @@ export interface DashboardMetricsResponse {
   total_eventos: number;
   sedes_info: SedeInfo[];  // ← Ahora viene agrupado por sede
 }
+
