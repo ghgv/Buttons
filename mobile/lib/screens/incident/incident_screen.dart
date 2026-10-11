@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/incident.dart';
 import '../../repositories/incident_repository.dart';
 import '../../services/storage_service.dart';
+import 'package:intl/intl.dart';
 
 class IncidentScreen extends StatefulWidget {
 
@@ -349,10 +350,22 @@ class _IncidentScreenState
 
                         "Baño",
 
+
                         widget
                             .incident
                             .bathroom,
 
+                      ),
+                      const SizedBox(height: 12),
+
+                      _infoRow(
+                        Icons.schedule,
+                        "Fecha y hora",
+                        DateFormat(
+                          "dd/MM/yyyy HH:mm:ss",
+                        ).format(
+                          widget.incident.createdAt,
+                        ),
                       ),
 
                     ],

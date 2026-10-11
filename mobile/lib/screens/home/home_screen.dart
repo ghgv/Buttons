@@ -10,6 +10,8 @@ import '../../services/storage_service.dart';
 import '../incident/incident_screen.dart';
 import '../login/login_screen.dart';
 
+import 'package:intl/intl.dart';
+
 
 class HomeScreen extends StatefulWidget {
 
@@ -125,48 +127,69 @@ class _HomeScreenState extends State<HomeScreen> {
 
       ),
 
-      body: provider.incidents.isEmpty
+      body: provider.loading
 
-          ? const Center(
+    ? const Center(
+        child: CircularProgressIndicator(),
+      )
 
+    : provider.error != null
+
+        ? Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
               child: Column(
-
-                mainAxisAlignment:
-                    MainAxisAlignment.center,
-
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
 
-                  Icon(
-                    Icons.check_circle_outline,
+                  const Icon(
+                    Icons.wifi_off,
                     size: 70,
-                    color: Colors.green,
+                    color: Colors.orange,
                   ),
 
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
                   Text(
-                    "### Buscando incidencias ####",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight:
-                          FontWeight.bold,
-                    ),
-                  ),
-
-                  SizedBox(height: 6),
-
-                  Text(
-                    "Version 1.0.5+6",
-                    style: TextStyle(
-                      color: Colors.grey,
+                    provider.error!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
 
                 ],
-
               ),
+            ),
+          )
 
-            )
+        : provider.incidents.isEmpty
+
+            ? const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+
+                    Icon(
+                      Icons.check_circle_outline,
+                      size: 70,
+                      color: Colors.green,
+                    ),
+
+                    SizedBox(height: 16),
+
+                    Text(
+                      "No hay incidencias",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                  ],
+                ),
+              )
 
           : ListView.builder(
 
@@ -240,58 +263,41 @@ class _HomeScreenState extends State<HomeScreen> {
 
                       style:
                           const TextStyle(
-
                         fontSize: 16,
-
-                        fontWeight:
-                            FontWeight.bold,
-
+                        fontWeight:  FontWeight.bold,
                       ),
 
                     ),
 
                     subtitle: Padding(
-
                       padding:
                           const EdgeInsets.only(
                         top: 8,
                       ),
-
                       child: Column(
-
                         crossAxisAlignment:
                             CrossAxisAlignment.start,
-
                         children: [
-
                           Row(
-
                             children: [
-
                               const Icon(
                                 Icons.business,
                                 size: 16,
                                 color: Colors.grey,
                               ),
 
-                              const SizedBox(
-                                  width: 6),
+                              const SizedBox(width: 6),
 
                               Expanded(
-                                child: Text(
-                                  incident.client,
-                                ),
+                                child: Text(incident.client),
                               ),
 
                             ],
-
                           ),
 
-                          const SizedBox(
-                              height: 5),
+                          const SizedBox(height: 5),
 
                           Row(
-
                             children: [
 
                               const Icon(
@@ -300,24 +306,47 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: Colors.grey,
                               ),
 
-                              const SizedBox(
-                                  width: 6),
+                              const SizedBox(width: 6),
 
                               Expanded(
-
                                 child: Text(
-                                  "${incident.floor} - "
-                                  "${incident.bathroom}",
+                                  "${incident.floor} - ${incident.bathroom}",
                                 ),
+                              ),
 
+
+                            ],
+                          ),
+
+                          const SizedBox(height: 5),
+
+                          Row(
+                            children: [
+
+                              const Icon(
+                                Icons.schedule,
+                                size: 16,
+                                color: Color.fromARGB(255, 45, 82, 96),
+                              ),
+
+                              const SizedBox(width: 6),
+
+                              Expanded(
+                                child: Text(
+                                  DateFormat("dd/MM/yyyy HH:mm:ss")
+                                      .format(incident.createdAt),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                ),
                               ),
 
                             ],
-
                           ),
 
                         ],
-
+                      
                       ),
 
                     ),
